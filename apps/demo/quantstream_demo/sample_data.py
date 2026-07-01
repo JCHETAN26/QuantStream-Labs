@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import random
 from decimal import Decimal
+from importlib.resources import files
 
 from quantstream_contracts.enums import Side
 from quantstream_contracts.events import Trade
@@ -84,3 +85,8 @@ def sample_events() -> list[Trade]:
 
 def injected_spike_count() -> int:
     return len(_spike_indices())
+
+
+def sample_csv_path() -> str:
+    """Path to the bundled sample CSV (the same data as sample_events)."""
+    return str(files("quantstream_demo").joinpath("data/acme_trades.csv"))

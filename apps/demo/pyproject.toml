@@ -21,6 +21,9 @@ quantstream-demo = "quantstream_demo.cli:main"
 where = ["."]
 include = ["quantstream_demo*"]
 
+[tool.setuptools.package-data]
+quantstream_demo = ["data/*.csv"]
+
 [tool.ruff]
 line-length = 100
 

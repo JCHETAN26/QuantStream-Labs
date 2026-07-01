@@ -14,10 +14,12 @@ RUN pip install --no-cache-dir ./packages/contracts
 COPY services/validation-engine ./services/validation-engine
 COPY services/replay-engine ./services/replay-engine
 COPY services/research-engine ./services/research-engine
+COPY services/schema-worker ./services/schema-worker
 RUN pip install --no-cache-dir \
     ./services/validation-engine \
     ./services/replay-engine \
-    ./services/research-engine
+    ./services/research-engine \
+    ./services/schema-worker
 
 COPY apps/demo ./apps/demo
 RUN pip install --no-cache-dir ./apps/demo

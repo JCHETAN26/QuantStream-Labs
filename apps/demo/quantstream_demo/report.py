@@ -27,6 +27,7 @@ class DemoResult:
     clean_checksum: str
     raw_config_hash: str
     mirage: MirageReport
+    load_errors: int = 0
 
 
 def fmt_money(value: Decimal) -> str:
