@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from quantstream_contracts.events import Event, Quote
 from quantstream_contracts.serialization import canonical_key
 
+from .confidence import ConfidenceTracker
 from .state import BookConfidence, BookSnapshot, BookSummary
 
 DEFAULT_STALE_NS = 5_000_000_000  # 5s
@@ -31,15 +32,18 @@ class OrderBook:
     def __init__(self, symbol: str, config: OrderBookConfig) -> None:
         self.symbol = symbol
         self._config = config
-        self.confidence = BookConfidence.HEALTHY
+        self._conf = ConfidenceTracker(config.recovery_threshold)
         self._run_key: tuple[int, int] | None = None
         self._run_start_ts: int = 0
-        self._recovery_count = 0
         self.quotes = 0
         self.crossed_count = 0
         self.stale_count = 0
         self.min_spread: int | None = None
         self.max_spread: int | None = None
+
+    @property
+    def confidence(self) -> BookConfidence:
+        return self._conf.confidence
 
     def update(self, quote: Quote) -> BookSnapshot:
         bid, ask = quote.bid_price, quote.ask_price
@@ -54,7 +58,7 @@ class OrderBook:
         spread = ask - bid
         mid = (bid + ask) // 2
 
-        self._advance_confidence(is_crossed, is_stale)
+        self._conf.observe(severe=is_crossed, mild=is_stale)
 
         self.quotes += 1
         if is_crossed:
@@ -77,27 +81,6 @@ class OrderBook:
             is_stale=is_stale,
             confidence=self.confidence,
         )
-
-    def _advance_confidence(self, is_crossed: bool, is_stale: bool) -> None:
-        if is_crossed:
-            self.confidence = BookConfidence.UNRELIABLE
-            self._recovery_count = 0
-        elif is_stale:
-            if self.confidence in (BookConfidence.HEALTHY, BookConfidence.RECOVERING):
-                self.confidence = BookConfidence.DEGRADED
-            self._recovery_count = 0
-        else:  # a clean, fresh quote
-            if self.confidence in (BookConfidence.DEGRADED, BookConfidence.UNRELIABLE):
-                self.confidence = BookConfidence.RECOVERING
-                self._recovery_count = 1
-            elif self.confidence == BookConfidence.RECOVERING:
-                self._recovery_count += 1
-            if (
-                self.confidence == BookConfidence.RECOVERING
-                and self._recovery_count >= self._config.recovery_threshold
-            ):
-                self.confidence = BookConfidence.HEALTHY
-                self._recovery_count = 0
 
     def summary(self) -> BookSummary:
         return BookSummary(

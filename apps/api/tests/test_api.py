@@ -81,3 +81,17 @@ def test_orderbook_demo():
         "healthy", "degraded", "unreliable", "recovering"
     }
     assert len(body["snapshots"]) == 12
+
+
+def test_orderbook_l2_demo():
+    r = client.get("/api/orderbook/l2/demo")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["symbol"] == "L2BOOK"
+    assert body["sequence_gap_count"] == 1
+    assert body["total_missing"] == 1
+    assert body["crossed_count"] == 1
+    assert body["final_confidence"] == "healthy"
+    assert set(body["confidence_states_seen"]) == {
+        "healthy", "degraded", "unreliable", "recovering"
+    }

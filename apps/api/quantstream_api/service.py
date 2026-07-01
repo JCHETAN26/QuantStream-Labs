@@ -4,10 +4,15 @@ from __future__ import annotations
 
 from quantstream_demo import DemoResult, analyze_events, run_demo
 from quantstream_orderbook import (
+    L2_SAMPLE_SYMBOL,
     SAMPLE_SYMBOL,
     BookSnapshot,
     BookSummary,
+    L2Snapshot,
+    L2Summary,
     reconstruct,
+    reconstruct_l2,
+    sample_l2_updates,
     sample_quotes,
 )
 from quantstream_schema import InferredSchema, load_csv_text
@@ -19,9 +24,15 @@ def bundled() -> DemoResult:
 
 
 def orderbook_demo() -> tuple[list[BookSnapshot], BookSummary]:
-    """Reconstruct top-of-book for the bundled quote sample."""
+    """Reconstruct top-of-book (L1) for the bundled quote sample."""
     snapshots, summaries = reconstruct(sample_quotes())
     return snapshots, summaries[SAMPLE_SYMBOL]
+
+
+def orderbook_l2_demo() -> tuple[list[L2Snapshot], L2Summary]:
+    """Reconstruct L2 depth for the bundled order-book-update sample."""
+    snapshots, summaries = reconstruct_l2(sample_l2_updates())
+    return snapshots, summaries[L2_SAMPLE_SYMBOL]
 
 
 def analyze_csv(text: str) -> tuple[InferredSchema, DemoResult]:
