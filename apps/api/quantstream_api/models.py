@@ -7,7 +7,9 @@ boundary, and the exact values remain available via the deterministic checksums.
 from __future__ import annotations
 
 from pydantic import BaseModel
+from quantstream_contracts.fixed_point import price_from_fixed
 from quantstream_demo import DemoResult
+from quantstream_orderbook import BookSnapshot, BookSummary
 from quantstream_research import BacktestMetrics
 from quantstream_schema import InferredSchema
 
@@ -72,6 +74,58 @@ def _schema(schema: InferredSchema) -> SchemaModel:
         timestamp_unit=schema.mapping.timestamp_unit.value,
         unmatched_columns=list(schema.unmatched_columns),
         notes=list(schema.notes),
+    )
+
+
+class BookSnapshotModel(BaseModel):
+    seq: int
+    timestamp_ns: int
+    best_bid: float
+    best_ask: float
+    spread: float
+    mid_price: float
+    quote_age_ns: int
+    is_crossed: bool
+    is_stale: bool
+    confidence: str
+
+
+class OrderBookResponse(BaseModel):
+    symbol: str
+    quotes: int
+    crossed_count: int
+    stale_count: int
+    final_confidence: str
+    confidence_states_seen: list[str]
+    snapshots: list[BookSnapshotModel]
+
+
+def _snapshot(s: BookSnapshot) -> BookSnapshotModel:
+    return BookSnapshotModel(
+        seq=s.seq,
+        timestamp_ns=s.timestamp_ns,
+        best_bid=float(price_from_fixed(s.best_bid)),
+        best_ask=float(price_from_fixed(s.best_ask)),
+        spread=float(price_from_fixed(s.spread)),
+        mid_price=float(price_from_fixed(s.mid_price)),
+        quote_age_ns=s.quote_age_ns,
+        is_crossed=s.is_crossed,
+        is_stale=s.is_stale,
+        confidence=s.confidence.value,
+    )
+
+
+def orderbook_to_response(
+    snapshots: list[BookSnapshot], summary: BookSummary
+) -> OrderBookResponse:
+    return OrderBookResponse(
+        symbol=summary.symbol,
+        quotes=summary.quotes,
+        crossed_count=summary.crossed_count,
+        stale_count=summary.stale_count,
+        final_confidence=summary.final_confidence.value,
+        confidence_states_seen=sorted({s.confidence.value for s in snapshots}),
+        snapshots=[_snapshot(s) for s in snapshots],
     )
 
 
