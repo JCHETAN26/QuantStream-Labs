@@ -67,3 +67,17 @@ def test_analyze_report_uploaded_csv_is_html():
 def test_analyze_empty_csv_returns_422():
     r = client.post("/api/analyze", files={"file": ("empty.csv", b"a,b\n", "text/csv")})
     assert r.status_code == 422
+
+
+def test_orderbook_demo():
+    r = client.get("/api/orderbook/demo")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["symbol"] == "BOOK"
+    assert body["crossed_count"] == 1
+    assert body["stale_count"] == 1
+    assert body["final_confidence"] == "healthy"
+    assert set(body["confidence_states_seen"]) == {
+        "healthy", "degraded", "unreliable", "recovering"
+    }
+    assert len(body["snapshots"]) == 12
