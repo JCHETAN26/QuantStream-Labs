@@ -22,26 +22,17 @@ from .sample_data import SAMPLE_SYMBOL, injected_spike_count, sample_events
 _STRATEGY = MeanReversionStrategy(lookback=1)
 
 
-def run_demo(csv_path: str | None = None) -> DemoResult:
-    """Run the pipeline on the bundled sample, or on a user CSV if given."""
-    if csv_path is None:
-        events = sample_events()
-        symbol = SAMPLE_SYMBOL
-        injected = injected_spike_count()
-        load_errors = 0
-    else:
-        from quantstream_schema import load_csv_path
+def analyze_events(
+    events,
+    *,
+    symbol: str,
+    injected_spikes: int = 0,
+    load_errors: int = 0,
+) -> DemoResult:
+    """Run validate -> replay(raw+clean) -> Alpha Mirage on a set of events.
 
-        _schema, load = load_csv_path(csv_path)
-        events = load.events
-        if not events:
-            raise ValueError(
-                f"no events loaded from {csv_path} ({len(load.errors)} row errors)"
-            )
-        symbol = events[0].symbol
-        injected = 0
-        load_errors = len(load.errors)
-
+    The shared pipeline used by both the CLI and the API gateway.
+    """
     report = validate(events)
     cleaned = clean_events(events, report)
 
@@ -53,7 +44,7 @@ def run_demo(csv_path: str | None = None) -> DemoResult:
     return DemoResult(
         symbol=symbol,
         total_events=len(events),
-        injected_spikes=injected,
+        injected_spikes=injected_spikes,
         flagged_events=report.flagged_events,
         validation_results=report.results,
         raw_checksum=raw_replay.checksum,
@@ -61,6 +52,25 @@ def run_demo(csv_path: str | None = None) -> DemoResult:
         raw_config_hash=raw_replay.config_hash,
         mirage=mirage,
         load_errors=load_errors,
+    )
+
+
+def run_demo(csv_path: str | None = None) -> DemoResult:
+    """Run the pipeline on the bundled sample, or on a user CSV if given."""
+    if csv_path is None:
+        return analyze_events(
+            sample_events(), symbol=SAMPLE_SYMBOL, injected_spikes=injected_spike_count()
+        )
+
+    from quantstream_schema import load_csv_path
+
+    _schema, load = load_csv_path(csv_path)
+    if not load.events:
+        raise ValueError(
+            f"no events loaded from {csv_path} ({len(load.errors)} row errors)"
+        )
+    return analyze_events(
+        load.events, symbol=load.events[0].symbol, load_errors=len(load.errors)
     )
 
 
