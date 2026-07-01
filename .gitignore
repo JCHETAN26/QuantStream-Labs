@@ -1,5 +1,6 @@
-# Generated demo artifact
+# Generated demo artifacts
 quantstream-report.html
+out/
 
 # Python
 __pycache__/

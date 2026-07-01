@@ -38,3 +38,16 @@ jobs:
           done
       - name: Smoke-test the demo
         run: quantstream-demo --no-report
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the demo image
+        run: docker build -t quantstream-labs-demo .
+      - name: Run the demo in the container
+        run: |
+          docker run --rm quantstream-labs-demo quantstream-demo --no-report | tee out.txt
+          grep -q "Mirage Score:" out.txt
+          grep -q "not research-safe" out.txt
+

@@ -1,0 +1,13 @@
+.git
+.github
+**/__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+out/
+quantstream-report.html
+build-plan.md
+system-prompt.md
+.DS_Store
