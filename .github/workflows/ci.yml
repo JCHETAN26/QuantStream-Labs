@@ -13,9 +13,26 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install
-        run: pip install -e "packages/contracts[dev]"
+      - name: Install all packages
+        run: |
+          python -m pip install --upgrade pip
+          for pkg in packages/* services/*; do
+            if [ -f "$pkg/pyproject.toml" ]; then
+              pip install -e "$pkg[dev]"
+            fi
+          done
       - name: Lint
-        run: ruff check packages/contracts
+        run: |
+          for pkg in packages/* services/*; do
+            if [ -f "$pkg/pyproject.toml" ]; then
+              ruff check "$pkg"
+            fi
+          done
       - name: Test
-        run: pytest packages/contracts -q
+        run: |
+          for pkg in packages/* services/*; do
+            if [ -f "$pkg/pyproject.toml" ]; then
+              echo "== $pkg =="
+              ( cd "$pkg" && pytest -q )
+            fi
+          done

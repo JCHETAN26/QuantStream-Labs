@@ -1,9 +1,16 @@
-.PHONY: test test-contracts lint
+.PHONY: test lint install
 
-test: test-contracts
+install:
+	@for p in packages/* services/*; do \
+	  if [ -f "$$p/pyproject.toml" ]; then pip install -e "$$p[dev]"; fi; \
+	done
 
-test-contracts:
-	pytest packages/contracts -q
+test:
+	@for p in packages/* services/*; do \
+	  if [ -f "$$p/pyproject.toml" ]; then echo "== $$p =="; ( cd "$$p" && pytest -q ); fi; \
+	done
 
 lint:
-	ruff check packages/contracts
+	@for p in packages/* services/*; do \
+	  if [ -f "$$p/pyproject.toml" ]; then ruff check "$$p"; fi; \
+	done
