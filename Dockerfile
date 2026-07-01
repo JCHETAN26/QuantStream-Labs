@@ -24,6 +24,10 @@ RUN pip install --no-cache-dir \
 COPY apps/demo ./apps/demo
 RUN pip install --no-cache-dir ./apps/demo
 
+COPY apps/api ./apps/api
+RUN pip install --no-cache-dir ./apps/api
+
 RUN mkdir -p /app/out
 
+# Default: run the demo once. The compose `api` service overrides this to serve HTTP.
 CMD ["quantstream-demo", "--output", "/app/out/quantstream-report.html"]

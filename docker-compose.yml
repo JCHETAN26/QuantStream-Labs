@@ -1,11 +1,16 @@
-# One-command demo: `docker compose up --build`
-#
-# Builds the image, runs the Alpha Mirage demo, prints the verdict to the logs, and
-# writes the HTML research-integrity report to ./out/quantstream-report.html on the
-# host.
+# Two ways in:
+#   docker compose up --build        -> runs the demo (prints the verdict, writes the report)
+#   docker compose up --build api    -> serves the API at http://localhost:8000
 services:
   demo:
     build: .
-    image: quantstream-labs-demo
+    image: quantstream-labs
     volumes:
       - ./out:/app/out
+
+  api:
+    build: .
+    image: quantstream-labs
+    command: ["quantstream-api"]
+    ports:
+      - "8000:8000"

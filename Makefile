@@ -1,4 +1,4 @@
-.PHONY: test lint install demo-alpha-mirage docker-demo
+.PHONY: test lint install demo-alpha-mirage docker-demo api
 
 install:
 	@for p in packages/* services/* apps/*; do \
@@ -20,3 +20,6 @@ demo-alpha-mirage:
 
 docker-demo:
 	docker compose up --build
+
+api:
+	quantstream-api
