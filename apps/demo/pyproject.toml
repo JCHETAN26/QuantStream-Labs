@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quantstream-demo"
+version = "0.1.0"
+description = "Alpha Mirage demo app for QuantStream Labs: sample data, CLI, and HTML report."
+readme = "README.md"
+requires-python = ">=3.10"
+# Depends on quantstream-contracts, -validation, -replay, -research (editable installs).
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "ruff>=0.4"]
+
+[project.scripts]
+quantstream-demo = "quantstream_demo.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["quantstream_demo*"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+# The HTML/CSS template legitimately has long lines.
+"quantstream_demo/report.py" = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -43,3 +43,28 @@ class MomentumStrategy:
         else:
             position = 0
         return position, [j, i]
+
+
+@dataclass(frozen=True)
+class MeanReversionStrategy:
+    """Fade the last move: short after a rise, long after a fall. This is the
+    strategy that gets fooled by bad data, it fades a spurious price spike and books
+    the 'reversion' that is really just the bad tick correcting itself."""
+
+    lookback: int = 1
+
+    def __post_init__(self) -> None:
+        if self.lookback < 1:
+            raise ValueError(f"lookback must be >= 1, got {self.lookback}")
+
+    def decide(self, prices: list[int], i: int) -> tuple[int, list[int]]:
+        if i < self.lookback:
+            return 0, [i]
+        j = i - self.lookback
+        if prices[i] > prices[j]:
+            position = -1  # rose -> fade short
+        elif prices[i] < prices[j]:
+            position = 1  # fell -> fade long
+        else:
+            position = 0
+        return position, [j, i]
