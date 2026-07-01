@@ -22,8 +22,25 @@ from .sample_data import SAMPLE_SYMBOL, injected_spike_count, sample_events
 _STRATEGY = MeanReversionStrategy(lookback=1)
 
 
-def run_demo() -> DemoResult:
-    events = sample_events()
+def run_demo(csv_path: str | None = None) -> DemoResult:
+    """Run the pipeline on the bundled sample, or on a user CSV if given."""
+    if csv_path is None:
+        events = sample_events()
+        symbol = SAMPLE_SYMBOL
+        injected = injected_spike_count()
+        load_errors = 0
+    else:
+        from quantstream_schema import load_csv_path
+
+        _schema, load = load_csv_path(csv_path)
+        events = load.events
+        if not events:
+            raise ValueError(
+                f"no events loaded from {csv_path} ({len(load.errors)} row errors)"
+            )
+        symbol = events[0].symbol
+        injected = 0
+        load_errors = len(load.errors)
 
     report = validate(events)
     cleaned = clean_events(events, report)
@@ -34,15 +51,16 @@ def run_demo() -> DemoResult:
     mirage = detect_alpha_mirage(events, list(report.defect_map), _STRATEGY)
 
     return DemoResult(
-        symbol=SAMPLE_SYMBOL,
+        symbol=symbol,
         total_events=len(events),
-        injected_spikes=injected_spike_count(),
+        injected_spikes=injected,
         flagged_events=report.flagged_events,
         validation_results=report.results,
         raw_checksum=raw_replay.checksum,
         clean_checksum=clean_replay.checksum,
         raw_config_hash=raw_replay.config_hash,
         mirage=mirage,
+        load_errors=load_errors,
     )
 
 
@@ -66,6 +84,8 @@ def format_terminal(result: DemoResult) -> str:
         f"Replay checksum (raw):   {result.raw_checksum}",
         f"Replay checksum (clean): {result.clean_checksum}",
     ]
+    if result.load_errors:
+        lines.append(f"\nNote: {result.load_errors} CSV rows skipped (parse errors).")
     return "\n".join(lines)
 
 
@@ -79,9 +99,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--no-report", action="store_true", help="skip writing the HTML report"
     )
+    parser.add_argument(
+        "--csv",
+        default=None,
+        help="load trades from a CSV instead of the bundled sample",
+    )
     args = parser.parse_args(argv)
 
-    result = run_demo()
+    result = run_demo(csv_path=args.csv)
     print(format_terminal(result))
 
     if not args.no_report:
