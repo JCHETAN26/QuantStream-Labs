@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quantstream-research"
+version = "0.1.0"
+description = "Backtest, PnL attribution, and the Alpha Mirage Detector for QuantStream Labs."
+readme = "README.md"
+requires-python = ">=3.10"
+# Depends on quantstream-contracts (and, for the integration test, quantstream-validation),
+# installed editable from their package directories.
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "ruff>=0.4"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["quantstream_research*"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
