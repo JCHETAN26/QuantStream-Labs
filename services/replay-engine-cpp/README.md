@@ -34,8 +34,24 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
+## The `replay` CLI
+
+A runnable C++20 replay engine: it reads a normalized trades CSV, applies the
+canonical `(timestamp, seq)` order, and prints the deterministic replay checksum.
+
+```bash
+cmake -S services/replay-engine-cpp -B build-cpp && cmake --build build-cpp
+./build-cpp/replay data/demo/defective_trades.csv
+# events: 400
+# replay_checksum: 6deb77e9f4187597d0127592900e0b5ef36ce8f199e807bdc96891c74365dd29
+```
+
+That checksum equals the Python replay engine's checksum on the same file,
+byte-for-byte — CI asserts it against `data/demo/expected_results.json`. Decimal
+prices are parsed to fixed-point exactly (`parse_fixed`), matching Python's
+`price_to_fixed`.
+
 ## Not here yet
 
-- A `replay` binary reading normalized event files and publishing to the bus
-  (single-partition canonical topic). The serialization + checksum core lands first,
-  because it is the part that must match Python.
+- Publishing the replayed stream to the bus (a `KafkaSink` on the single-partition
+  canonical topic). Determinism does not depend on it — the checksum is source-side.

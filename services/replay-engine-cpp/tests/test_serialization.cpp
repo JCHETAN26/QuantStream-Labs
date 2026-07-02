@@ -5,6 +5,7 @@
 
 #include "check.hpp"
 #include "quantstream/blake2b.hpp"
+#include "quantstream/csv_load.hpp"
 #include "quantstream/serialization.hpp"
 
 using namespace quantstream;
@@ -49,6 +50,13 @@ int main() {
     bumped.price += 1;
     mutated[3] = Event{bumped};
     CHECK(stream_checksum(mutated) != a);
+
+    // Decimal -> fixed-point parsing matches Python's price_to_fixed exactly.
+    CHECK(parse_fixed("100.07") == 100070000000LL);
+    CHECK(parse_fixed("-3.5") == -3500000000LL);
+    CHECK(parse_fixed("100") == 100000000000LL);
+    CHECK(parse_fixed("0.000000001") == 1LL);
+    CHECK(parse_fixed("0") == 0LL);
 
     return qtest::failures == 0 ? 0 : 1;
 }
