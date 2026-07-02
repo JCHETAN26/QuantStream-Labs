@@ -28,6 +28,14 @@ def test_iso_naive_assumed_utc():
     assert parse_timestamp("1970-01-01T00:00:00", TimestampUnit.ISO) == 0
 
 
+def test_iso_z_suffix_accepted():
+    # Market feeds stamp UTC as '...Z'; must work on Python 3.10 too.
+    assert parse_timestamp("1970-01-01T00:00:01Z", TimestampUnit.ISO) == 1_000_000_000
+    assert parse_timestamp("2023-11-14T22:13:20Z", TimestampUnit.ISO) == (
+        parse_timestamp("2023-11-14T22:13:20+00:00", TimestampUnit.ISO)
+    )
+
+
 def test_empty_timestamp_rejected():
     with pytest.raises(ValueError):
         parse_timestamp("  ", TimestampUnit.NS)

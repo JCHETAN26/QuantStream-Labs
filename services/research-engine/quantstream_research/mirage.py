@@ -20,7 +20,7 @@ from decimal import Decimal
 
 from quantstream_contracts.events import Event
 
-from .backtest import BacktestMetrics, BacktestResult, run_backtest
+from .backtest import BacktestConfig, BacktestMetrics, BacktestResult, run_backtest
 from .strategy import Strategy
 
 DEFAULT_MIRAGE_THRESHOLD = Decimal("0.5")
@@ -67,14 +67,15 @@ def detect_alpha_mirage_detailed(
     strategy: Strategy,
     *,
     threshold: Decimal = DEFAULT_MIRAGE_THRESHOLD,
+    config: BacktestConfig | None = None,
 ) -> MirageDetail:
     """Run the raw and cleaned backtests and return both the verdict and the full
     per-interval results (for equity curves / attribution timelines)."""
     flagged = frozenset(flagged_seqs)
 
-    raw_result = run_backtest(raw_events, flagged, strategy)
+    raw_result = run_backtest(raw_events, flagged, strategy, config)
     clean_events = [e for e in raw_events if e.seq not in flagged]
-    clean_result = run_backtest(clean_events, frozenset(), strategy)
+    clean_result = run_backtest(clean_events, frozenset(), strategy, config)
 
     raw = raw_result.metrics
     clean = clean_result.metrics
@@ -98,7 +99,8 @@ def detect_alpha_mirage(
     strategy: Strategy,
     *,
     threshold: Decimal = DEFAULT_MIRAGE_THRESHOLD,
+    config: BacktestConfig | None = None,
 ) -> MirageReport:
     return detect_alpha_mirage_detailed(
-        raw_events, flagged_seqs, strategy, threshold=threshold
+        raw_events, flagged_seqs, strategy, threshold=threshold, config=config
     ).report

@@ -21,7 +21,9 @@ from quantstream_schema import InferredSchema
 
 class MetricsModel(BaseModel):
     sharpe: float
-    total_pnl: float
+    total_pnl: float  # net of costs
+    gross_pnl: float
+    total_cost: float
     max_drawdown: float
     hit_rate: float
     turnover: int
@@ -64,6 +66,8 @@ def _metrics(m: BacktestMetrics) -> MetricsModel:
     return MetricsModel(
         sharpe=float(m.sharpe),
         total_pnl=float(m.total_pnl),
+        gross_pnl=float(m.gross_pnl),
+        total_cost=float(m.total_cost),
         max_drawdown=float(m.max_drawdown),
         hit_rate=float(m.hit_rate),
         turnover=m.turnover,
