@@ -13,6 +13,7 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest>=7", "ruff>=0.4"]
+kafka = ["confluent-kafka>=2.0"]  # KafkaSink transport (not needed for the checksum)
 
 [tool.setuptools.packages.find]
 where = ["."]
