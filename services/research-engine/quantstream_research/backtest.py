@@ -29,20 +29,35 @@ from .strategy import Strategy
 
 
 @dataclass(frozen=True)
+class BacktestConfig:
+    # Round-trip-agnostic cost charged per unit of position *change*, in fixed-point
+    # price units. Models commission + half-spread crossing. A position flip from
+    # -1 to +1 is 2 units of change. Default 0 = frictionless (legacy behavior).
+    cost_per_unit: int = 0
+
+
+@dataclass(frozen=True)
 class Contribution:
     symbol: str
     from_seq: int
     to_seq: int
     position: int
-    pnl: int  # fixed-point price units
+    pnl: int  # gross fixed-point price units (before cost)
+    cost: int  # transaction cost charged this interval (fixed-point)
     tainted: bool
     causal_seqs: frozenset[int]
+
+    @property
+    def net_pnl(self) -> int:
+        return self.pnl - self.cost
 
 
 @dataclass(frozen=True)
 class BacktestMetrics:
-    total_pnl: Decimal
-    tainted_pnl: Decimal
+    total_pnl: Decimal  # net of costs
+    tainted_pnl: Decimal  # net of costs
+    gross_pnl: Decimal  # before costs
+    total_cost: Decimal
     sharpe: Decimal
     max_drawdown: Decimal
     hit_rate: Decimal
@@ -71,7 +86,9 @@ def run_backtest(
     events: list[Event],
     flagged_seqs: Collection[int],
     strategy: Strategy,
+    config: BacktestConfig | None = None,
 ) -> BacktestResult:
+    config = config or BacktestConfig()
     flagged = frozenset(flagged_seqs)
     contributions: list[Contribution] = []
     turnover = 0
@@ -79,12 +96,15 @@ def run_backtest(
     for symbol, trades in _trades_by_symbol(events).items():
         prices = [t.price for t in trades]
         seqs = [t.seq for t in trades]
-        prev_position: int | None = None
+        prev_position = 0
 
         for i in range(len(trades)):
             position, consulted = strategy.decide(prices, i)
-            if prev_position is not None and position != prev_position:
+            changed = abs(position - prev_position)
+            if changed:
                 turnover += 1
+            # Cost of establishing this position is charged to the interval it opens.
+            cost = changed * config.cost_per_unit
             prev_position = position
 
             if i + 1 >= len(trades):
@@ -100,6 +120,7 @@ def run_backtest(
                     to_seq=seqs[i + 1],
                     position=position,
                     pnl=pnl,
+                    cost=cost,
                     tainted=tainted,
                     causal_seqs=frozenset(causal),
                 )
@@ -113,19 +134,23 @@ def run_backtest(
 
 def _build_metrics(contributions: list[Contribution], turnover: int) -> BacktestMetrics:
     scale = Decimal(PRICE_SCALE)
-    pnl_series = [Decimal(c.pnl) / scale for c in contributions]
+    net_series = [Decimal(c.net_pnl) / scale for c in contributions]
+    gross_series = [Decimal(c.pnl) / scale for c in contributions]
+    cost_series = [Decimal(c.cost) / scale for c in contributions]
     positions = [c.position for c in contributions]
     tainted_series = [
-        pnl for pnl, c in zip(pnl_series, contributions, strict=True) if c.tainted
+        pnl for pnl, c in zip(net_series, contributions, strict=True) if c.tainted
     ]
     active = sum(1 for p in positions if p != 0)
 
     return BacktestMetrics(
-        total_pnl=sum(pnl_series, Decimal(0)),
+        total_pnl=sum(net_series, Decimal(0)),
         tainted_pnl=sum(tainted_series, Decimal(0)),
-        sharpe=metrics.sharpe(pnl_series),
-        max_drawdown=metrics.max_drawdown(pnl_series),
-        hit_rate=metrics.hit_rate(pnl_series, positions),
+        gross_pnl=sum(gross_series, Decimal(0)),
+        total_cost=sum(cost_series, Decimal(0)),
+        sharpe=metrics.sharpe(net_series),
+        max_drawdown=metrics.max_drawdown(net_series),
+        hit_rate=metrics.hit_rate(net_series, positions),
         turnover=turnover,
         active_intervals=active,
         total_intervals=len(contributions),

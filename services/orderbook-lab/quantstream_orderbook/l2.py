@@ -62,6 +62,12 @@ class L2Book:
         self._conf = ConfidenceTracker(config.recovery_threshold)
         self._bids: dict[int, int] = {}  # price -> size
         self._asks: dict[int, int] = {}
+        # Best bid/ask and total depth are maintained incrementally: O(1) per update,
+        # falling back to a recompute only when the current best level is removed.
+        self._best_bid: int | None = None
+        self._best_ask: int | None = None
+        self._bid_depth = 0
+        self._ask_depth = 0
         self._expected_seq: int | None = None
         self.updates = 0
         self.sequence_gap_count = 0
@@ -76,19 +82,38 @@ class L2Book:
         gap, missing = self._check_sequence(update.sequence_number)
         self._expected_seq = update.sequence_number + 1
 
-        levels = self._bids if update.side == Side.BUY else self._asks
-        if update.action == BookAction.DELETE or update.size <= 0:
-            levels.pop(update.price, None)
-        else:  # ADD or UPDATE both set the level
-            levels[update.price] = update.size
+        is_bid = update.side == Side.BUY
+        levels = self._bids if is_bid else self._asks
+        removing = update.action == BookAction.DELETE or update.size <= 0
 
-        best_bid = max(self._bids) if self._bids else None
-        best_ask = min(self._asks) if self._asks else None
+        if removing:
+            old_size = levels.pop(update.price, 0)
+            if is_bid:
+                self._bid_depth -= old_size
+                if update.price == self._best_bid:
+                    self._best_bid = max(self._bids) if self._bids else None
+            else:
+                self._ask_depth -= old_size
+                if update.price == self._best_ask:
+                    self._best_ask = min(self._asks) if self._asks else None
+        else:  # ADD or UPDATE both set the level
+            old_size = levels.get(update.price, 0)
+            levels[update.price] = update.size
+            if is_bid:
+                self._bid_depth += update.size - old_size
+                if self._best_bid is None or update.price > self._best_bid:
+                    self._best_bid = update.price
+            else:
+                self._ask_depth += update.size - old_size
+                if self._best_ask is None or update.price < self._best_ask:
+                    self._best_ask = update.price
+
+        best_bid, best_ask = self._best_bid, self._best_ask
         is_crossed = (
             best_bid is not None and best_ask is not None and best_bid > best_ask
         )
-        bid_depth = sum(self._bids.values())
-        ask_depth = sum(self._asks.values())
+        bid_depth = self._bid_depth
+        ask_depth = self._ask_depth
         total = bid_depth + ask_depth
         imbalance = (
             Decimal(bid_depth - ask_depth) / Decimal(total) if total > 0 else Decimal(0)

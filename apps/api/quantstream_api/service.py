@@ -69,7 +69,7 @@ def _curve(contributions: tuple[Contribution, ...], ts: dict[int, int]) -> list[
     points: list[PnlPoint] = []
     cum = Decimal(0)
     for c in contributions:
-        pnl = Decimal(c.pnl) / Decimal(PRICE_SCALE)
+        pnl = Decimal(c.net_pnl) / Decimal(PRICE_SCALE)
         cum += pnl
         points.append(
             PnlPoint(

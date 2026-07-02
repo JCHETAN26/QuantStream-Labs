@@ -8,6 +8,7 @@ compares raw vs cleaned performance to detect fake alpha caused by bad data.
 from __future__ import annotations
 
 from .backtest import (
+    BacktestConfig,
     BacktestMetrics,
     BacktestResult,
     Contribution,
@@ -24,6 +25,7 @@ from .strategy import MeanReversionStrategy, MomentumStrategy, Strategy
 
 __all__ = [
     "Contribution",
+    "BacktestConfig",
     "BacktestMetrics",
     "BacktestResult",
     "run_backtest",

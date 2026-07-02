@@ -33,6 +33,9 @@ def parse_timestamp(value: str, unit: TimestampUnit) -> int:
         raise ValueError("empty timestamp")
 
     if unit == TimestampUnit.ISO:
+        # Python < 3.11 rejects the 'Z' suffix; market feeds stamp UTC as '...Z'.
+        if text[-1:] in ("Z", "z"):
+            text = text[:-1] + "+00:00"
         dt = datetime.fromisoformat(text)
         if dt.tzinfo is None:
             dt = dt.replace(tzinfo=timezone.utc)

@@ -114,3 +114,37 @@ def test_sample_is_deterministic():
     a, _ = reconstruct_l2(sample_l2_updates())
     b, _ = reconstruct_l2(sample_l2_updates())
     assert [s.confidence for s in a] == [s.confidence for s in b]
+
+
+def test_incremental_best_and_depth_match_bruteforce():
+    # The O(1) incremental best/depth tracking must equal a full recompute after a
+    # random mix of adds, updates, and deletes (including deleting the best level).
+    import random
+
+    from quantstream_contracts.enums import BookAction, Side
+
+    rng = random.Random(2024)
+    book = L2Book("X", L2Config())
+    live: dict[tuple[int, int], int] = {}  # (side, price) -> size
+    prices = [price_to_fixed(str(100 + i)) for i in range(8)]
+    for seq in range(300):
+        side = rng.choice([Side.BUY, Side.SELL])
+        price = rng.choice(prices)
+        if rng.random() < 0.3 and (side.value, price) in live:
+            action, size = BookAction.DELETE, 0
+        else:
+            action, size = BookAction.ADD, rng.randint(1, 5) * 1_000_000_000
+        snap = book.apply(
+            L2Update(seq, seq, "X", side, price, size, action, 0, seq + 1, "V")
+        )
+        # brute-force truth
+        if action == BookAction.DELETE or size <= 0:
+            live.pop((side.value, price), None)
+        else:
+            live[(side.value, price)] = size
+        bids = [p for (s, p), _ in live.items() if s == Side.BUY.value]
+        asks = [p for (s, p), _ in live.items() if s == Side.SELL.value]
+        assert snap.best_bid == (max(bids) if bids else None)
+        assert snap.best_ask == (min(asks) if asks else None)
+        assert snap.bid_depth == sum(v for (s, _), v in live.items() if s == Side.BUY.value)
+        assert snap.ask_depth == sum(v for (s, _), v in live.items() if s == Side.SELL.value)
