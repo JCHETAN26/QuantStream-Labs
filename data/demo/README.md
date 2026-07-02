@@ -1,6 +1,6 @@
 # QuantStream Labs — Alpha Mirage reproducibility dataset
 
-`alpha_mirage_demo_v1` · canonical demo dataset for
+`alpha_mirage_demo_v2` · canonical demo dataset for
 [QuantStream Labs](https://github.com/JCHETAN26/QuantStream-Labs).
 
 This dataset exists to make one result reproducible byte-for-byte: **bad market
@@ -22,10 +22,10 @@ data can manufacture fake alpha, and QuantStream Labs detects it deterministical
 
 - Validation failures: **198**
 - High-severity defects: **0**
-- Replay checksum (raw): `7c517a403b20c3b2068215bb2fef5bc66f19b33677041ed6f605f193afe25b06`
+- Replay checksum (raw): `6deb77e9f4187597d0127592900e0b5ef36ce8f199e807bdc96891c74365dd29`
 - Raw Sharpe / Clean Sharpe:
-  `0.3213646568975194640952630306` / `-0.1035022902775482425468481587`
-- Mirage score: `1.000006663690218369128455956`
+  `0.4174283771712361142213535120` / `-0.002279627586494221590963274134`
+- Mirage score: `0.9999192893155195884831233959`
 - Research-safe: **false**
 
 Companion `defective_quotes.csv`: 10 validation
@@ -37,11 +37,11 @@ failures, 5 high-severity
 | File | SHA-256 |
 | --- | --- |
 | `clean_quotes.csv` | `8d56c624950ad8a76e9761e2c41646b1a163337d2b3e747c4579207266669896` |
-| `clean_trades.csv` | `67c27df843b73ad821a5113011e3ed4326f62603330bd04b71b157d104df6de0` |
-| `defect_manifest.json` | `bd6c6bfd7a029c93018ad922aa917d597ffb0569cf3f96bede8656aebeffbefe` |
+| `clean_trades.csv` | `0699f07208636ef5dfd5ab44837f466a315ecbd7df69d78c8cedc5a5e24ec762` |
+| `defect_manifest.json` | `8a561c6b6aa813437aee7228fb02cf07b259394620451f8970cd929f3c664a4d` |
 | `defective_quotes.csv` | `fb184f2d3d9c32525406dd8075169cd03692514a4bdb2032de1839cc19d5e689` |
-| `defective_trades.csv` | `fc822fae1728a885387d8599f1550aa5075a456c20c652a4ab24a35a73da5e3c` |
-| `expected_results.json` | `a2e2cdaabac0b3d34569190ad9d9b0f54abfcfdf00692f8606e8ebb1d8244b5c` |
+| `defective_trades.csv` | `89a902afac189bd8e632e53be3701d7564768350a447c9d684ed1f0dbfab5248` |
+| `expected_results.json` | `9ba80b4fe045a35e1925b7a00d642e5359a6d4b59be9433cb917535fb41fc7f6` |
 
 ## Reproduce
 

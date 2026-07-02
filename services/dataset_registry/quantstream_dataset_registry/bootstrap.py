@@ -35,7 +35,7 @@ from quantstream_validation import clean as clean_events
 from . import generate
 from .checksums import SHA256SUMS_NAME, render_sha256sums, sha256_bytes
 
-DATASET_ID = "alpha_mirage_demo_v1"
+DATASET_ID = "alpha_mirage_demo_v2"
 HF_REPO = "JCHETAN26/quantstream-alpha-mirage"
 STRATEGY_LOOKBACK = 1
 

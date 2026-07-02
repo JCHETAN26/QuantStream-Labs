@@ -49,11 +49,19 @@ _START_TS = 1_700_000_000_000_000_000
 # ---------------------------------------------------------------------------
 _BASE_PRICE = Decimal("100.00")
 _N = 400
-_STEP_NS = 1_000_000  # 1ms between trades
 
-# A tiny random walk: real but edgeless price movement. Steps are far below the
-# validation engine's 20% bad-tick threshold, so the base is never flagged.
-_WALK_STEP = Decimal("0.02")
+# A geometric (multiplicative) random walk over a realistic ~6.5h session.
+# Symmetric per-trade returns of ~0.1-0.3% -> no real edge for a mean-reversion
+# strategy (a martingale), realistic intraday vol, prices that wander like a real
+# tape rather than a bounded flat line. Everything is Decimal + integer RNG (no
+# libm), so the dataset regenerates byte-for-byte on any machine.
+_RETURN_TICKS = (
+    Decimal("-0.003"), Decimal("-0.002"), Decimal("-0.001"),
+    Decimal("0.001"), Decimal("0.002"), Decimal("0.003"),
+)
+# Irregular trade arrivals: gaps drawn uniformly from 10ms..120s (integer ns).
+_MIN_GAP_NS = 10_000_000
+_MAX_GAP_NS = 120_000_000_000
 
 # Bad ticks every _SPIKE_EVERY trades, alternating up/down, big enough that the
 # validation engine's 20% bad-tick threshold catches them.
@@ -71,25 +79,37 @@ def injected_spike_count() -> int:
     return len(_spike_indices())
 
 
+def _timestamps() -> list[int]:
+    """Irregular, strictly-increasing trade timestamps over a trading session."""
+    rng = random.Random(SAMPLE_SEED + 777)
+    ts = _START_TS
+    out: list[int] = []
+    for _ in range(_N):
+        out.append(ts)
+        ts += rng.randint(_MIN_GAP_NS, _MAX_GAP_NS)
+    return out
+
+
 def _base_walk() -> list[Decimal]:
     rng = random.Random(SAMPLE_SEED)
     price = _BASE_PRICE
     prices: list[Decimal] = []
     for _ in range(_N):
-        prices.append(price)
-        price += _WALK_STEP if rng.random() < 0.5 else -_WALK_STEP
+        prices.append(price.quantize(Decimal("0.01")))
+        ret = _RETURN_TICKS[rng.randrange(len(_RETURN_TICKS))]
+        price = price * (Decimal(1) + ret)
         if price < Decimal("1"):
             price = Decimal("1")
     return prices
 
 
 def clean_prices() -> list[Decimal]:
-    """The pristine base walk, no spikes."""
+    """The pristine geometric walk, no spikes."""
     return _base_walk()
 
 
 def sample_prices() -> list[Decimal]:
-    """The base walk with injected bad-tick spikes."""
+    """The geometric walk with injected bad-tick spikes."""
     prices = _base_walk()
     for n, idx in enumerate(_spike_indices()):
         factor = _UP_FACTOR if n % 2 == 0 else _DOWN_FACTOR
@@ -98,12 +118,13 @@ def sample_prices() -> list[Decimal]:
 
 
 def _trades_from_prices(prices: list[Decimal]) -> list[Trade]:
+    timestamps = _timestamps()
     events: list[Trade] = []
     for i, price in enumerate(prices):
         events.append(
             Trade(
                 seq=i,
-                timestamp_ns=_START_TS + i * _STEP_NS,
+                timestamp_ns=timestamps[i],
                 symbol=SAMPLE_SYMBOL,
                 price=price_to_fixed(price),
                 size=size_to_fixed("100"),
