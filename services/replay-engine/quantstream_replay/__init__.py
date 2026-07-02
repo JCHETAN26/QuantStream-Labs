@@ -9,12 +9,15 @@ from __future__ import annotations
 
 from .config import ReplayConfig
 from .engine import ReplayResult, replay
-from .sink import InMemorySink, Sink
+from .sink import DEFAULT_TOPIC, InMemorySink, KafkaSink, Sink, kafka_producer
 
 __all__ = [
     "ReplayConfig",
     "ReplayResult",
     "replay",
     "InMemorySink",
+    "KafkaSink",
+    "kafka_producer",
+    "DEFAULT_TOPIC",
     "Sink",
 ]
