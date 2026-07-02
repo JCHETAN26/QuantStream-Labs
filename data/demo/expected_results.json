@@ -1,0 +1,38 @@
+{
+  "companion_quotes": {
+    "event_count": 120,
+    "expected_defect_counts": {
+      "crossed_book": 3,
+      "invalid_price": 2,
+      "stale_quote": 5
+    },
+    "expected_high_severity_defects": 5,
+    "expected_validation_failures": 10,
+    "input_file": "defective_quotes.csv"
+  },
+  "dataset_id": "alpha_mirage_demo_v1",
+  "event_count": 400,
+  "expected_clean_pnl": "-0.56",
+  "expected_clean_sharpe": "-0.1035022902775482425468481587",
+  "expected_defect_counts": {
+    "bad_tick": 198
+  },
+  "expected_high_severity_defects": 0,
+  "expected_mirage_score": "1.000006663690218369128455956",
+  "expected_raw_pnl": "3001.34",
+  "expected_raw_sharpe": "0.3213646568975194640952630306",
+  "expected_replay_checksum": "7c517a403b20c3b2068215bb2fef5bc66f19b33677041ed6f605f193afe25b06",
+  "expected_replay_checksum_clean": "8987f19a0eacecb232e3efa897e27b217b4d567321381f1319dce9df1d440622",
+  "expected_replay_config_hash": "48c0c4900a6ac15567b47575859ca25d",
+  "expected_research_safe": false,
+  "expected_tainted_pnl": "3001.36",
+  "expected_validation_failures": 198,
+  "hf_repo": "JCHETAN26/quantstream-alpha-mirage",
+  "input_file": "defective_trades.csv",
+  "mirage_threshold": "0.5",
+  "strategy": {
+    "lookback": 1,
+    "name": "mean_reversion"
+  },
+  "symbol": "ACME"
+}

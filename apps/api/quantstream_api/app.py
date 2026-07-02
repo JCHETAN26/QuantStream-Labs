@@ -16,6 +16,7 @@ from .models import (
     AnalysisResponse,
     L2Response,
     OrderBookResponse,
+    SeriesResponse,
     l2_to_response,
     orderbook_to_response,
     to_response,
@@ -37,6 +38,7 @@ code{background:#f6f8fa;padding:2px 6px;border-radius:4px}</style></head><body>
 <ul>
 <li><a href="/api/demo/report">Run the Alpha Mirage demo (HTML report)</a></li>
 <li><a href="/api/demo">Demo result as JSON</a></li>
+<li><a href="/api/demo/series">Raw vs cleaned equity-curve series + flagged timeline (JSON)</a></li>
 <li><a href="/api/orderbook/demo">OrderBookLab L1: top-of-book confidence (JSON)</a></li>
 <li><a href="/api/orderbook/l2/demo">OrderBookLab L2: depth + sequence gaps (JSON)</a></li>
 <li><a href="/docs">API docs</a> &mdash; upload a CSV to <code>POST /api/analyze</code></li>
@@ -61,6 +63,11 @@ def demo() -> AnalysisResponse:
 @app.get("/api/demo/report", response_class=HTMLResponse)
 def demo_report() -> str:
     return build_html(service.bundled())
+
+
+@app.get("/api/demo/series", response_model=SeriesResponse)
+def demo_series() -> SeriesResponse:
+    return service.demo_series()
 
 
 @app.get("/api/orderbook/demo", response_model=OrderBookResponse)
@@ -98,6 +105,15 @@ async def analyze_report(file: UploadFile = File(...)) -> str:
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     return build_html(result)
+
+
+@app.post("/api/analyze/series", response_model=SeriesResponse)
+async def analyze_series(file: UploadFile = File(...)) -> SeriesResponse:
+    text = await _read_csv(file)
+    try:
+        return service.analyze_series(text)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 def run() -> None:  # pragma: no cover - convenience entry point

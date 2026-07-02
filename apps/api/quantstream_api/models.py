@@ -192,6 +192,28 @@ def l2_to_response(snapshots: list[L2Snapshot], summary: L2Summary) -> L2Respons
     )
 
 
+class PnlPoint(BaseModel):
+    seq: int
+    timestamp_ns: int
+    pnl: float
+    cum_pnl: float
+    tainted: bool
+
+
+class FlaggedEvent(BaseModel):
+    seq: int
+    defects: list[str]
+
+
+class SeriesResponse(BaseModel):
+    symbol: str
+    total_events: int
+    flagged_events: int
+    raw_curve: list[PnlPoint]
+    clean_curve: list[PnlPoint]
+    flagged: list[FlaggedEvent]
+
+
 def to_response(
     result: DemoResult, schema: InferredSchema | None = None
 ) -> AnalysisResponse:

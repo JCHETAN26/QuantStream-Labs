@@ -2,6 +2,9 @@
 quantstream-report.html
 out/
 
+# Dataset provenance is environment-specific (records how the local copy was fetched)
+data/demo/.provenance.json
+
 # Python
 __pycache__/
 *.py[cod]

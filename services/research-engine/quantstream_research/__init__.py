@@ -13,7 +13,13 @@ from .backtest import (
     Contribution,
     run_backtest,
 )
-from .mirage import DEFAULT_MIRAGE_THRESHOLD, MirageReport, detect_alpha_mirage
+from .mirage import (
+    DEFAULT_MIRAGE_THRESHOLD,
+    MirageDetail,
+    MirageReport,
+    detect_alpha_mirage,
+    detect_alpha_mirage_detailed,
+)
 from .strategy import MeanReversionStrategy, MomentumStrategy, Strategy
 
 __all__ = [
@@ -25,6 +31,8 @@ __all__ = [
     "MeanReversionStrategy",
     "Strategy",
     "MirageReport",
+    "MirageDetail",
     "detect_alpha_mirage",
+    "detect_alpha_mirage_detailed",
     "DEFAULT_MIRAGE_THRESHOLD",
 ]
