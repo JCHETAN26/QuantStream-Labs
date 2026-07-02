@@ -10,9 +10,14 @@ endif()
 
 add_library(quantstream_replay STATIC
   src/blake2b.cpp
-  src/serialization.cpp)
+  src/serialization.cpp
+  src/csv_load.cpp)
 target_include_directories(quantstream_replay PUBLIC include)
 target_compile_options(quantstream_replay PRIVATE -Wall -Wextra)
+
+# The replay engine CLI: reads a trades CSV, prints the deterministic checksum.
+add_executable(replay src/replay_main.cpp)
+target_link_libraries(replay PRIVATE quantstream_replay)
 
 enable_testing()
 
