@@ -14,7 +14,9 @@ from quantstream_demo import build_html
 from . import service
 from .models import (
     AnalysisResponse,
+    L2Response,
     OrderBookResponse,
+    l2_to_response,
     orderbook_to_response,
     to_response,
 )
@@ -35,7 +37,8 @@ code{background:#f6f8fa;padding:2px 6px;border-radius:4px}</style></head><body>
 <ul>
 <li><a href="/api/demo/report">Run the Alpha Mirage demo (HTML report)</a></li>
 <li><a href="/api/demo">Demo result as JSON</a></li>
-<li><a href="/api/orderbook/demo">OrderBookLab: top-of-book confidence (JSON)</a></li>
+<li><a href="/api/orderbook/demo">OrderBookLab L1: top-of-book confidence (JSON)</a></li>
+<li><a href="/api/orderbook/l2/demo">OrderBookLab L2: depth + sequence gaps (JSON)</a></li>
 <li><a href="/docs">API docs</a> &mdash; upload a CSV to <code>POST /api/analyze</code></li>
 </ul></body></html>"""
 
@@ -64,6 +67,12 @@ def demo_report() -> str:
 def orderbook_demo() -> OrderBookResponse:
     snapshots, summary = service.orderbook_demo()
     return orderbook_to_response(snapshots, summary)
+
+
+@app.get("/api/orderbook/l2/demo", response_model=L2Response)
+def orderbook_l2_demo() -> L2Response:
+    snapshots, summary = service.orderbook_l2_demo()
+    return l2_to_response(snapshots, summary)
 
 
 async def _read_csv(file: UploadFile) -> str:

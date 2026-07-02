@@ -7,9 +7,14 @@ boundary, and the exact values remain available via the deterministic checksums.
 from __future__ import annotations
 
 from pydantic import BaseModel
-from quantstream_contracts.fixed_point import price_from_fixed
+from quantstream_contracts.fixed_point import price_from_fixed, size_from_fixed
 from quantstream_demo import DemoResult
-from quantstream_orderbook import BookSnapshot, BookSummary
+from quantstream_orderbook import (
+    BookSnapshot,
+    BookSummary,
+    L2Snapshot,
+    L2Summary,
+)
 from quantstream_research import BacktestMetrics
 from quantstream_schema import InferredSchema
 
@@ -126,6 +131,64 @@ def orderbook_to_response(
         final_confidence=summary.final_confidence.value,
         confidence_states_seen=sorted({s.confidence.value for s in snapshots}),
         snapshots=[_snapshot(s) for s in snapshots],
+    )
+
+
+class L2SnapshotModel(BaseModel):
+    seq: int
+    timestamp_ns: int
+    best_bid: float | None
+    best_ask: float | None
+    bid_depth: float
+    ask_depth: float
+    depth_imbalance: float
+    sequence_gap: bool
+    missing: int
+    is_crossed: bool
+    confidence: str
+
+
+class L2Response(BaseModel):
+    symbol: str
+    updates: int
+    sequence_gap_count: int
+    total_missing: int
+    crossed_count: int
+    final_confidence: str
+    bid_levels: int
+    ask_levels: int
+    confidence_states_seen: list[str]
+    snapshots: list[L2SnapshotModel]
+
+
+def _l2_snapshot(s: L2Snapshot) -> L2SnapshotModel:
+    return L2SnapshotModel(
+        seq=s.seq,
+        timestamp_ns=s.timestamp_ns,
+        best_bid=float(price_from_fixed(s.best_bid)) if s.best_bid is not None else None,
+        best_ask=float(price_from_fixed(s.best_ask)) if s.best_ask is not None else None,
+        bid_depth=float(size_from_fixed(s.bid_depth)),
+        ask_depth=float(size_from_fixed(s.ask_depth)),
+        depth_imbalance=float(s.depth_imbalance),
+        sequence_gap=s.sequence_gap,
+        missing=s.missing,
+        is_crossed=s.is_crossed,
+        confidence=s.confidence.value,
+    )
+
+
+def l2_to_response(snapshots: list[L2Snapshot], summary: L2Summary) -> L2Response:
+    return L2Response(
+        symbol=summary.symbol,
+        updates=summary.updates,
+        sequence_gap_count=summary.sequence_gap_count,
+        total_missing=summary.total_missing,
+        crossed_count=summary.crossed_count,
+        final_confidence=summary.final_confidence.value,
+        bid_levels=summary.bid_levels,
+        ask_levels=summary.ask_levels,
+        confidence_states_seen=sorted({s.confidence.value for s in snapshots}),
+        snapshots=[_l2_snapshot(s) for s in snapshots],
     )
 
 
