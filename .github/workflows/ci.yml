@@ -36,6 +36,10 @@ jobs:
               ( cd "$pkg" && pytest -q )
             fi
           done
+      - name: Fetch + verify the official dataset (offline)
+        run: quantstream-fetch-dataset --offline
+      - name: Reproducibility regression
+        run: ( cd services/dataset_registry && pytest -q tests/test_reproducibility.py )
       - name: Smoke-test the demo
         run: quantstream-demo --no-report
 

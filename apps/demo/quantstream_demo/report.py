@@ -1,19 +1,30 @@
 """Static HTML research-integrity report.
 
 Self-contained (inline CSS, no dependencies), dense and professional. Given a
-DemoResult it renders the dataset summary, validation results, replay
-reproducibility metadata, the raw-vs-clean performance comparison, and the Alpha
-Mirage verdict.
+DemoResult it renders the dataset provenance, validation results, replay
+reproducibility metadata, the raw-vs-clean performance comparison, the companion
+quote-defect summary, and the Alpha Mirage verdict.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from decimal import Decimal
 from html import escape
 
 from quantstream_research import BacktestMetrics, MirageReport
-from quantstream_validation import CheckResult
+from quantstream_validation import CheckResult, Severity
+
+
+@dataclass(frozen=True)
+class QuotesSummary:
+    """Companion quote-dataset validation summary (high-severity defect showcase)."""
+
+    input_file: str
+    total_events: int
+    flagged_events: int
+    high_severity: int
+    defect_counts: dict[str, int] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -28,6 +39,19 @@ class DemoResult:
     raw_config_hash: str
     mirage: MirageReport
     load_errors: int = 0
+    # Dataset provenance (populated by the demo; empty for ad-hoc CSV analysis).
+    dataset_id: str = ""
+    source: str = ""
+    revision: str = ""
+    checksum_summary: str = ""
+    input_file: str = ""
+    high_severity: int = 0
+    quotes: QuotesSummary | None = None
+    report_path: str | None = None
+
+
+def high_severity_count(results: tuple[CheckResult, ...]) -> int:
+    return sum(r.count for r in results if r.severity == Severity.CRITICAL)
 
 
 def fmt_money(value: Decimal) -> str:
@@ -75,6 +99,46 @@ def _metric_rows(raw: BacktestMetrics, clean: BacktestMetrics) -> str:
             row("Active intervals", str(raw.active_intervals), str(clean.active_intervals)),
         ]
     )
+
+
+def _provenance_section(result: DemoResult) -> str:
+    if not result.dataset_id:
+        return ""
+    rows = [
+        ("Dataset", escape(result.dataset_id)),
+        ("Input file", escape(result.input_file or "")),
+        ("Source", escape(result.source or "")),
+        ("Revision", escape(result.revision or "")),
+        ("Checksum status", f"PASS ({escape(result.checksum_summary)})"
+            if result.checksum_summary else "PASS"),
+    ]
+    body = "\n".join(
+        f"<tr><td>{k}</td><td class='mono'>{v}</td></tr>" for k, v in rows
+    )
+    return f"""
+  <section>
+    <h2>Dataset Provenance</h2>
+    <table><tbody>
+      {body}
+    </tbody></table>
+  </section>"""
+
+
+def _quotes_section(result: DemoResult) -> str:
+    q = result.quotes
+    if q is None:
+        return ""
+    counts = ", ".join(f"{escape(k)}: {v}" for k, v in sorted(q.defect_counts.items()))
+    return f"""
+  <section>
+    <h2>Companion Quote Dataset</h2>
+    <div class="grid">
+      <div class="stat"><div class="k">File</div><div class="v">{escape(q.input_file)}</div></div>
+      <div class="stat"><div class="k">Validation failures</div><div class="v">{q.flagged_events}</div></div>
+      <div class="stat"><div class="k">High-severity</div><div class="v">{q.high_severity}</div></div>
+    </div>
+    <p class="mono">{escape(counts)}</p>
+  </section>"""
 
 
 def build_html(result: DemoResult) -> str:
@@ -131,13 +195,14 @@ def build_html(result: DemoResult) -> str:
     <div class="score">Mirage Score: {fmt_pct(m.mirage_score)}</div>
     <p>{escape(m.conclusion)}</p>
   </section>
-
+{_provenance_section(result)}
   <section>
     <h2>Dataset Summary</h2>
     <div class="grid">
       <div class="stat"><div class="k">Symbol</div><div class="v">{escape(result.symbol)}</div></div>
       <div class="stat"><div class="k">Events</div><div class="v">{result.total_events}</div></div>
       <div class="stat"><div class="k">Flagged events</div><div class="v">{result.flagged_events}</div></div>
+      <div class="stat"><div class="k">High-severity</div><div class="v">{result.high_severity}</div></div>
     </div>
   </section>
 
@@ -160,7 +225,7 @@ def build_html(result: DemoResult) -> str:
       </tbody>
     </table>
   </section>
-
+{_quotes_section(result)}
   <section>
     <h2>Reproducibility</h2>
     <table>

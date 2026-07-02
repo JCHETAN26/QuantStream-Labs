@@ -43,6 +43,34 @@ def test_demo_report_is_html():
     assert "Research Integrity Report" in r.text
 
 
+def test_demo_series_reconciles_with_headline():
+    r = client.get("/api/demo/series")
+    assert r.status_code == 200
+    body = r.json()
+    expected = run_demo()
+    assert body["symbol"] == expected.symbol
+    assert body["total_events"] == expected.total_events
+    assert body["flagged_events"] == expected.flagged_events
+    assert body["raw_curve"] and body["clean_curve"]
+    # The curve endpoints reconcile exactly with the reported PnL.
+    assert body["raw_curve"][-1]["cum_pnl"] == float(expected.mirage.raw.total_pnl)
+    assert body["clean_curve"][-1]["cum_pnl"] == float(expected.mirage.clean.total_pnl)
+    # Flagged timeline matches the validation count and carries defect labels.
+    assert len(body["flagged"]) == expected.flagged_events
+    assert all(pt["defects"] for pt in body["flagged"])
+
+
+def test_analyze_series_uploaded_csv_matches_bundled():
+    with open(sample_csv_path(), "rb") as f:
+        data = f.read()
+    r = client.post("/api/analyze/series", files={"file": ("acme.csv", data, "text/csv")})
+    assert r.status_code == 200
+    body = r.json()
+    expected = run_demo()
+    assert body["raw_curve"][-1]["cum_pnl"] == float(expected.mirage.raw.total_pnl)
+    assert body["flagged_events"] == expected.flagged_events
+
+
 def test_analyze_uploaded_csv_matches_bundled():
     with open(sample_csv_path(), "rb") as f:
         data = f.read()

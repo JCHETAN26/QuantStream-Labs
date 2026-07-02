@@ -8,7 +8,8 @@ version = "0.1.0"
 description = "Alpha Mirage demo app for QuantStream Labs: sample data, CLI, and HTML report."
 readme = "README.md"
 requires-python = ">=3.10"
-# Depends on quantstream-contracts, -validation, -replay, -research (editable installs).
+# Depends on quantstream-contracts, -validation, -replay, -research, -schema, and
+# -dataset-registry (editable installs).
 dependencies = []
 
 [project.optional-dependencies]

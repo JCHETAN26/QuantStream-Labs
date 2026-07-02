@@ -20,7 +20,7 @@ from decimal import Decimal
 
 from quantstream_contracts.events import Event
 
-from .backtest import BacktestMetrics, run_backtest
+from .backtest import BacktestMetrics, BacktestResult, run_backtest
 from .strategy import Strategy
 
 DEFAULT_MIRAGE_THRESHOLD = Decimal("0.5")
@@ -35,6 +35,63 @@ class MirageReport:
     conclusion: str
 
 
+@dataclass(frozen=True)
+class MirageDetail:
+    """A MirageReport plus the full raw/clean backtest results.
+
+    The per-interval ``contributions`` on each result are what a UI needs to draw
+    the raw-vs-cleaned equity curves and to mark which intervals were tainted.
+    """
+
+    report: MirageReport
+    raw_result: BacktestResult
+    clean_result: BacktestResult
+
+
+def _conclusion(score: Decimal, research_safe: bool) -> str:
+    if research_safe:
+        return (
+            "Signal is research-safe. Performance does not materially depend on "
+            "corrupted market-data regions."
+        )
+    pct = (score * 100).quantize(Decimal("1"))
+    return (
+        "Signal is not research-safe. "
+        f"{pct}% of simulated PnL came from corrupted market-data events."
+    )
+
+
+def detect_alpha_mirage_detailed(
+    raw_events: list[Event],
+    flagged_seqs: Collection[int],
+    strategy: Strategy,
+    *,
+    threshold: Decimal = DEFAULT_MIRAGE_THRESHOLD,
+) -> MirageDetail:
+    """Run the raw and cleaned backtests and return both the verdict and the full
+    per-interval results (for equity curves / attribution timelines)."""
+    flagged = frozenset(flagged_seqs)
+
+    raw_result = run_backtest(raw_events, flagged, strategy)
+    clean_events = [e for e in raw_events if e.seq not in flagged]
+    clean_result = run_backtest(clean_events, frozenset(), strategy)
+
+    raw = raw_result.metrics
+    clean = clean_result.metrics
+
+    score = Decimal(0) if raw.total_pnl == 0 else raw.tainted_pnl / raw.total_pnl
+    research_safe = abs(score) < threshold
+
+    report = MirageReport(
+        raw=raw,
+        clean=clean,
+        mirage_score=score,
+        research_safe=research_safe,
+        conclusion=_conclusion(score, research_safe),
+    )
+    return MirageDetail(report=report, raw_result=raw_result, clean_result=clean_result)
+
+
 def detect_alpha_mirage(
     raw_events: list[Event],
     flagged_seqs: Collection[int],
@@ -42,34 +99,6 @@ def detect_alpha_mirage(
     *,
     threshold: Decimal = DEFAULT_MIRAGE_THRESHOLD,
 ) -> MirageReport:
-    flagged = frozenset(flagged_seqs)
-
-    raw = run_backtest(raw_events, flagged, strategy).metrics
-    clean_events = [e for e in raw_events if e.seq not in flagged]
-    clean = run_backtest(clean_events, frozenset(), strategy).metrics
-
-    if raw.total_pnl == 0:
-        score = Decimal(0)
-    else:
-        score = raw.tainted_pnl / raw.total_pnl
-
-    research_safe = abs(score) < threshold
-    if research_safe:
-        conclusion = (
-            "Signal is research-safe. Performance does not materially depend on "
-            "corrupted market-data regions."
-        )
-    else:
-        pct = (score * 100).quantize(Decimal("1"))
-        conclusion = (
-            "Signal is not research-safe. "
-            f"{pct}% of simulated PnL came from corrupted market-data events."
-        )
-
-    return MirageReport(
-        raw=raw,
-        clean=clean,
-        mirage_score=score,
-        research_safe=research_safe,
-        conclusion=conclusion,
-    )
+    return detect_alpha_mirage_detailed(
+        raw_events, flagged_seqs, strategy, threshold=threshold
+    ).report

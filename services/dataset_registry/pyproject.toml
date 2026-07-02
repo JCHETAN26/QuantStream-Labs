@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quantstream-dataset-registry"
+version = "0.1.0"
+description = "Official reproducibility dataset registry for QuantStream Labs: deterministic generation, Hugging Face fetch, and SHA-256 verification."
+readme = "README.md"
+requires-python = ">=3.10"
+# Depends (editable) on quantstream-contracts, -validation, -replay, -research,
+# -schema. huggingface_hub is optional: the demo must work fully offline.
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "ruff>=0.4"]
+hf = ["huggingface_hub>=0.20"]
+
+[project.scripts]
+quantstream-fetch-dataset = "quantstream_dataset_registry.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["quantstream_dataset_registry*"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
