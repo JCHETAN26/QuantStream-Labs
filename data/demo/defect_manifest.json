@@ -1,5 +1,5 @@
 {
-  "dataset_id": "alpha_mirage_demo_v1",
+  "dataset_id": "alpha_mirage_demo_v2",
   "description": "Ground-truth injected defects for the QuantStream Labs Alpha Mirage demo dataset. Detection is measured against this file; the validation engine never reads it.",
   "files": {
     "clean_quotes.csv": {
