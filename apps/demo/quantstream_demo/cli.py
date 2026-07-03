@@ -14,15 +14,21 @@ from __future__ import annotations
 
 import argparse
 import sys
+from importlib.resources import files
 from pathlib import Path
 
+from quantstream_contracts.fixed_point import price_to_fixed
 from quantstream_dataset_registry import (
     ChecksumError,
     demo_backtest_config,
     ensure_dataset,
 )
 from quantstream_replay import replay
-from quantstream_research import MeanReversionStrategy, detect_alpha_mirage
+from quantstream_research import (
+    BacktestConfig,
+    MeanReversionStrategy,
+    detect_alpha_mirage,
+)
 from quantstream_schema import load_csv_path
 from quantstream_validation import clean as clean_events
 from quantstream_validation import validate
@@ -46,6 +52,12 @@ DEMO_CONFIG = demo_backtest_config()
 PRIMARY_TRADES = "defective_trades.csv"
 COMPANION_QUOTES = "defective_quotes.csv"
 
+# Real-data mode: a committed real Coinbase BTC-USD tape with documented injected
+# defects, bundled with the package so it ships in the Docker image. BTC ~ $60k, so
+# the transaction cost per unit is ~1 bp.
+REAL_TRADES = "btcusd_coinbase_defective.csv"
+REAL_CONFIG = BacktestConfig(cost_per_unit=price_to_fixed("6"))
+
 
 def dataset_events(*, strict: bool = True) -> list:
     """Ensure/verify the official dataset and load its primary trade events.
@@ -63,6 +75,7 @@ def analyze_events(
     symbol: str,
     injected_spikes: int = 0,
     load_errors: int = 0,
+    config: BacktestConfig | None = None,
 ) -> DemoResult:
     """Run validate -> replay(raw+clean) -> Alpha Mirage on a set of events.
 
@@ -75,7 +88,7 @@ def analyze_events(
     clean_replay = replay(cleaned)
 
     mirage = detect_alpha_mirage(
-        events, list(report.defect_map), _STRATEGY, config=DEMO_CONFIG
+        events, list(report.defect_map), _STRATEGY, config=config or DEMO_CONFIG
     )
 
     return DemoResult(
@@ -136,6 +149,34 @@ def run_dataset_demo(*, strict: bool = True) -> DemoResult:
             "checksum_summary": status.verify.summary(),
             "input_file": PRIMARY_TRADES,
             "quotes": quotes,
+        }
+    )
+
+
+def real_dataset_events() -> list:
+    """Load the bundled real Coinbase BTC-USD tape (with injected defects)."""
+    path = files("quantstream_demo").joinpath("data").joinpath(REAL_TRADES)
+    return _load_events(Path(str(path)))
+
+
+def run_real_demo() -> DemoResult:
+    """Alpha Mirage on a real Coinbase BTC-USD tape.
+
+    Same pipeline as the synthetic demo, on real market data with documented,
+    seeded bad-tick injections and a BTC-appropriate transaction cost. The clean
+    strategy is a net loser once the corrupted ticks it was fading are removed.
+    """
+    events = real_dataset_events()
+    result = analyze_events(events, symbol=events[0].symbol, config=REAL_CONFIG)
+    return DemoResult(
+        **{
+            **result.__dict__,
+            "dataset_id": "coinbase_btcusd_real",
+            "source": "coinbase",
+            "revision": "snapshot",
+            "checksum_summary": "real market data (Coinbase public API)",
+            "input_file": REAL_TRADES,
+            "quotes": None,
         }
     )
 

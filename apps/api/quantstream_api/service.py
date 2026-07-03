@@ -10,10 +10,13 @@ from quantstream_contracts.fixed_point import PRICE_SCALE
 from quantstream_demo import (
     DEMO_CONFIG,
     DEMO_STRATEGY,
+    REAL_CONFIG,
     DemoResult,
     analyze_events,
     dataset_events,
+    real_dataset_events,
     run_demo,
+    run_real_demo,
 )
 from quantstream_orderbook import (
     L2_SAMPLE_SYMBOL,
@@ -34,9 +37,9 @@ from quantstream_validation import validate
 from .models import FlaggedEvent, PnlPoint, SeriesResponse
 
 
-def bundled() -> DemoResult:
-    """Run the pipeline on the bundled sample dataset."""
-    return run_demo()
+def bundled(source: str = "synthetic") -> DemoResult:
+    """Run the pipeline on the demo dataset. source='real' uses the Coinbase tape."""
+    return run_real_demo() if source == "real" else run_demo()
 
 
 def orderbook_demo() -> tuple[list[BookSnapshot], BookSummary]:
@@ -85,7 +88,7 @@ def _curve(contributions: tuple[Contribution, ...], ts: dict[int, int]) -> list[
     return points
 
 
-def _series_for(events: list[Event], symbol: str) -> SeriesResponse:
+def _series_for(events: list[Event], symbol: str, config=DEMO_CONFIG) -> SeriesResponse:
     """Build raw/clean cumulative-PnL curves and the flagged-event timeline.
 
     Uses the same strategy and validation as the headline verdict, so the curves
@@ -93,7 +96,7 @@ def _series_for(events: list[Event], symbol: str) -> SeriesResponse:
     """
     report = validate(events)
     detail = detect_alpha_mirage_detailed(
-        events, list(report.defect_map), DEMO_STRATEGY, config=DEMO_CONFIG
+        events, list(report.defect_map), DEMO_STRATEGY, config=config
     )
     ts = {e.seq: e.timestamp_ns for e in events}
 
@@ -111,12 +114,13 @@ def _series_for(events: list[Event], symbol: str) -> SeriesResponse:
     )
 
 
-async def replay_stream(delay_ms: int = 5) -> AsyncIterator[str]:
+async def replay_stream(delay_ms: int = 5, source: str = "synthetic") -> AsyncIterator[str]:
     """Server-Sent Events: replay the dataset tick-by-tick with running state.
 
     Each event is a `data: {json}` line (seq, timestamp, price, processed count, and
     any defect flags), paced by `delay_ms`, ending with a summary. This is the
-    real-time monitor feed the frontend consumes.
+    real-time monitor feed the frontend consumes. source='real' streams the Coinbase
+    tape.
     """
     import asyncio
     import json
@@ -124,7 +128,7 @@ async def replay_stream(delay_ms: int = 5) -> AsyncIterator[str]:
     from quantstream_contracts.fixed_point import price_from_fixed
     from quantstream_contracts.serialization import canonical_sort
 
-    events = dataset_events()
+    events = real_dataset_events() if source == "real" else dataset_events()
     report = validate(events)
     ordered = canonical_sort(events)
     for i, e in enumerate(ordered):
@@ -147,8 +151,11 @@ async def replay_stream(delay_ms: int = 5) -> AsyncIterator[str]:
     yield f"data: {json.dumps(summary)}\n\n"
 
 
-def demo_series() -> SeriesResponse:
-    """Per-interval equity curves + flagged timeline for the official dataset."""
+def demo_series(source: str = "synthetic") -> SeriesResponse:
+    """Per-interval equity curves + flagged timeline. source='real' uses Coinbase."""
+    if source == "real":
+        events = real_dataset_events()
+        return _series_for(events, events[0].symbol, REAL_CONFIG)
     events = dataset_events()
     return _series_for(events, events[0].symbol)
 
