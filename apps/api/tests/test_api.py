@@ -111,6 +111,21 @@ def test_orderbook_demo():
     assert len(body["snapshots"]) == 12
 
 
+def test_stream_replay_sse():
+    r = client.get("/api/stream/replay?delay_ms=0")
+    assert r.status_code == 200
+    assert "text/event-stream" in r.headers["content-type"]
+    import json
+
+    data_lines = [ln for ln in r.text.splitlines() if ln.startswith("data:")]
+    assert len(data_lines) >= 400  # a tick per event, plus a summary
+    first = json.loads(data_lines[0][len("data:"):])
+    assert "price" in first and "processed" in first
+    last = json.loads(data_lines[-1][len("data:"):])
+    assert last["type"] == "summary"
+    assert last["events"] == 400
+
+
 def test_orderbook_l2_demo():
     r = client.get("/api/orderbook/l2/demo")
     assert r.status_code == 200

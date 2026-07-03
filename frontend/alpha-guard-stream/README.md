@@ -42,6 +42,23 @@ To target a deployed backend:
 API_BASE=https://your-backend.example.com npm run dev
 ```
 
+## Live replay (Server-Sent Events)
+
+The backend streams the replay tick-by-tick at `GET /api/stream/replay` (proxied to
+`/api/backend/stream/replay`). Consume it with `EventSource` for a real-time monitor:
+
+```ts
+const es = new EventSource("/api/backend/stream/replay?delay_ms=20");
+es.onmessage = (ev) => {
+  const tick = JSON.parse(ev.data);
+  if (tick.type === "summary") { es.close(); return; }
+  // tick: { seq, timestamp_ns, price, processed, flagged, defects }
+  updateLiveView(tick);
+};
+```
+
+The proxy streams the response body, so SSE works same-origin with no CORS.
+
 ## Verified wiring
 
 With the backend running, the proxy reaches every endpoint the UI uses:

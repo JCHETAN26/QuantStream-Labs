@@ -8,7 +8,7 @@ docs are at /docs.
 from __future__ import annotations
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from quantstream_demo import build_html
 
 from . import service
@@ -39,6 +39,7 @@ code{background:#f6f8fa;padding:2px 6px;border-radius:4px}</style></head><body>
 <li><a href="/api/demo/report">Run the Alpha Mirage demo (HTML report)</a></li>
 <li><a href="/api/demo">Demo result as JSON</a></li>
 <li><a href="/api/demo/series">Raw vs cleaned equity-curve series + flagged timeline (JSON)</a></li>
+<li><a href="/api/stream/replay?delay_ms=20">Live replay stream (Server-Sent Events)</a></li>
 <li><a href="/api/orderbook/demo">OrderBookLab L1: top-of-book confidence (JSON)</a></li>
 <li><a href="/api/orderbook/l2/demo">OrderBookLab L2: depth + sequence gaps (JSON)</a></li>
 <li><a href="/docs">API docs</a> &mdash; upload a CSV to <code>POST /api/analyze</code></li>
@@ -68,6 +69,13 @@ def demo_report() -> str:
 @app.get("/api/demo/series", response_model=SeriesResponse)
 def demo_series() -> SeriesResponse:
     return service.demo_series()
+
+
+@app.get("/api/stream/replay")
+async def stream_replay(delay_ms: int = 5) -> StreamingResponse:
+    return StreamingResponse(
+        service.replay_stream(delay_ms), media_type="text/event-stream"
+    )
 
 
 @app.get("/api/orderbook/demo", response_model=OrderBookResponse)
