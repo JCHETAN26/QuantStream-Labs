@@ -12,6 +12,10 @@ from decimal import Decimal, localcontext
 
 _SQRT_PRECISION = 50
 
+# Trading-time annualization: 252 days x 6.5h. Documented convention (see
+# docs/methodology.md) so the annualized number is derived, not fabricated.
+TRADING_SECONDS_PER_YEAR = Decimal("5896800")  # 252 * 6.5 * 3600
+
 
 def mean(values: list[Decimal]) -> Decimal:
     if not values:
@@ -38,6 +42,16 @@ def sharpe(pnl_series: list[Decimal]) -> Decimal:
     if sd == 0:
         return Decimal(0)
     return mean(pnl_series) / sd
+
+
+def annualized_sharpe(per_step_sharpe: Decimal, periods_per_year: Decimal) -> Decimal:
+    """Scale a per-step Sharpe to annual by sqrt(periods_per_year). Deterministic."""
+    if periods_per_year <= 0:
+        return Decimal(0)
+    with localcontext() as ctx:
+        ctx.prec = _SQRT_PRECISION
+        factor = periods_per_year.sqrt()
+    return per_step_sharpe * factor
 
 
 def max_drawdown(pnl_series: list[Decimal]) -> Decimal:

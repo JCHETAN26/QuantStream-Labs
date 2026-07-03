@@ -7,6 +7,7 @@ raw-vs-clean backtest -> Alpha Mirage, with a terminal verdict and an HTML repor
 from __future__ import annotations
 
 from .cli import (
+    DEMO_CONFIG,
     DEMO_STRATEGY,
     analyze_events,
     dataset_events,
@@ -22,6 +23,7 @@ __all__ = [
     "analyze_events",
     "dataset_events",
     "DEMO_STRATEGY",
+    "DEMO_CONFIG",
     "main",
     "format_terminal",
     "DemoResult",

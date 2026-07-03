@@ -16,7 +16,11 @@ import argparse
 import sys
 from pathlib import Path
 
-from quantstream_dataset_registry import ChecksumError, ensure_dataset
+from quantstream_dataset_registry import (
+    ChecksumError,
+    demo_backtest_config,
+    ensure_dataset,
+)
 from quantstream_replay import replay
 from quantstream_research import MeanReversionStrategy, detect_alpha_mirage
 from quantstream_schema import load_csv_path
@@ -34,8 +38,10 @@ from .report import (
 )
 
 _STRATEGY = MeanReversionStrategy(lookback=1)
-# Public alias so other services (the API series endpoint) reuse the exact strategy.
+# Public aliases so other services (the API series endpoint) reuse the exact strategy
+# and transaction-cost config, keeping their numbers identical to the headline verdict.
 DEMO_STRATEGY = _STRATEGY
+DEMO_CONFIG = demo_backtest_config()
 
 PRIMARY_TRADES = "defective_trades.csv"
 COMPANION_QUOTES = "defective_quotes.csv"
@@ -68,7 +74,9 @@ def analyze_events(
     raw_replay = replay(events)
     clean_replay = replay(cleaned)
 
-    mirage = detect_alpha_mirage(events, list(report.defect_map), _STRATEGY)
+    mirage = detect_alpha_mirage(
+        events, list(report.defect_map), _STRATEGY, config=DEMO_CONFIG
+    )
 
     return DemoResult(
         symbol=symbol,

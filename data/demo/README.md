@@ -24,8 +24,8 @@ data can manufacture fake alpha, and QuantStream Labs detects it deterministical
 - High-severity defects: **0**
 - Replay checksum (raw): `6deb77e9f4187597d0127592900e0b5ef36ce8f199e807bdc96891c74365dd29`
 - Raw Sharpe / Clean Sharpe:
-  `0.4174283771712361142213535120` / `-0.002279627586494221590963274134`
-- Mirage score: `0.9999192893155195884831233959`
+  `0.4162642652426672141405933724` / `-0.07573947392180985060251093164`
+- Mirage score: `0.9999460462707182320441988950`
 - Research-safe: **false**
 
 Companion `defective_quotes.csv`: 10 validation
@@ -41,7 +41,7 @@ failures, 5 high-severity
 | `defect_manifest.json` | `8a561c6b6aa813437aee7228fb02cf07b259394620451f8970cd929f3c664a4d` |
 | `defective_quotes.csv` | `fb184f2d3d9c32525406dd8075169cd03692514a4bdb2032de1839cc19d5e689` |
 | `defective_trades.csv` | `89a902afac189bd8e632e53be3701d7564768350a447c9d684ed1f0dbfab5248` |
-| `expected_results.json` | `9ba80b4fe045a35e1925b7a00d642e5359a6d4b59be9433cb917535fb41fc7f6` |
+| `expected_results.json` | `bce63bb7cd42c9b9e65b45579bd1cf9fc09baf09d7f8fdd05ff6ba03b7b8e641` |
 
 ## Reproduce
 

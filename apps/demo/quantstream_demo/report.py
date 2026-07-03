@@ -91,8 +91,10 @@ def _metric_rows(raw: BacktestMetrics, clean: BacktestMetrics) -> str:
 
     return "\n".join(
         [
-            row("Sharpe (per-step)", fmt_sharpe(raw.sharpe), fmt_sharpe(clean.sharpe)),
-            row("Total PnL", fmt_money(raw.total_pnl), fmt_money(clean.total_pnl)),
+            row("Sharpe (per-trade)", fmt_sharpe(raw.sharpe), fmt_sharpe(clean.sharpe)),
+            row("Gross PnL", fmt_money(raw.gross_pnl), fmt_money(clean.gross_pnl)),
+            row("Transaction cost", fmt_money(-raw.total_cost), fmt_money(-clean.total_cost)),
+            row("Net PnL", fmt_money(raw.total_pnl), fmt_money(clean.total_pnl)),
             row("Max drawdown", fmt_money(raw.max_drawdown), fmt_money(clean.max_drawdown)),
             row("Hit rate", fmt_pct(raw.hit_rate), fmt_pct(clean.hit_rate)),
             row("Turnover", str(raw.turnover), str(clean.turnover)),
