@@ -146,13 +146,21 @@ async function safeJson<T>(path: string, fallback: () => T): Promise<FetchResult
   }
 }
 
+export type DataSource = "synthetic" | "real";
+
+const srcParam = (s: DataSource) => (s === "real" ? "?source=real" : "");
+
 export const api = {
-  demo: () => safeJson<AnalysisReport>("/demo", mockDemo),
-  demoSeries: () => safeJson<SeriesReport>("/demo/series", mockSeries),
+  demo: (s: DataSource = "synthetic") =>
+    safeJson<AnalysisReport>(`/demo${srcParam(s)}`, mockDemo),
+  demoSeries: (s: DataSource = "synthetic") =>
+    safeJson<SeriesReport>(`/demo/series${srcParam(s)}`, mockSeries),
   orderbookL1: () => safeJson<OrderBookL1Report>("/orderbook/demo", mockOrderBookL1),
   orderbookL2: () => safeJson<OrderBookL2Report>("/orderbook/l2/demo", mockOrderBookL2),
-  reportUrl: () => `${PROXY_BASE}/demo/report`,
+  reportUrl: (s: DataSource = "synthetic") => `${PROXY_BASE}/demo/report${srcParam(s)}`,
   reportUrlForUpload: () => `${PROXY_BASE}/analyze/report`,
+  replayStreamUrl: (s: DataSource = "synthetic", delayMs = 20) =>
+    `${PROXY_BASE}/stream/replay?delay_ms=${delayMs}${s === "real" ? "&source=real" : ""}`,
 
   async analyzeUpload(file: File): Promise<FetchResult<AnalysisReport>> {
     try {
