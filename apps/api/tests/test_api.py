@@ -111,6 +111,17 @@ def test_orderbook_demo():
     assert len(body["snapshots"]) == 12
 
 
+def test_real_data_mirage_source():
+    r = client.get("/api/demo?source=real")
+    assert r.status_code == 200
+    b = r.json()
+    assert b["symbol"] == "BTC-USD"
+    assert b["research_safe"] is False
+    # The mirage on the real tape: raw looks positive, clean collapses below zero.
+    assert b["raw"]["sharpe"] > b["clean"]["sharpe"]
+    assert b["clean"]["sharpe"] < 0  # no-edge strategy loses on the clean real tape
+
+
 def test_stream_replay_sse():
     r = client.get("/api/stream/replay?delay_ms=0")
     assert r.status_code == 200

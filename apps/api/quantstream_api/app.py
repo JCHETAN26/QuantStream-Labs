@@ -57,24 +57,24 @@ def health() -> dict[str, str]:
 
 
 @app.get("/api/demo", response_model=AnalysisResponse)
-def demo() -> AnalysisResponse:
-    return to_response(service.bundled())
+def demo(source: str = "synthetic") -> AnalysisResponse:
+    return to_response(service.bundled(source))
 
 
 @app.get("/api/demo/report", response_class=HTMLResponse)
-def demo_report() -> str:
-    return build_html(service.bundled())
+def demo_report(source: str = "synthetic") -> str:
+    return build_html(service.bundled(source))
 
 
 @app.get("/api/demo/series", response_model=SeriesResponse)
-def demo_series() -> SeriesResponse:
-    return service.demo_series()
+def demo_series(source: str = "synthetic") -> SeriesResponse:
+    return service.demo_series(source)
 
 
 @app.get("/api/stream/replay")
-async def stream_replay(delay_ms: int = 5) -> StreamingResponse:
+async def stream_replay(delay_ms: int = 5, source: str = "synthetic") -> StreamingResponse:
     return StreamingResponse(
-        service.replay_stream(delay_ms), media_type="text/event-stream"
+        service.replay_stream(delay_ms, source), media_type="text/event-stream"
     )
 
 
