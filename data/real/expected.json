@@ -1,0 +1,8 @@
+{
+  "clean_strategy_pnl": "-220.49",
+  "clean_strategy_sharpe": "-0.6281616589627161092745879690",
+  "events": 500,
+  "natural_defects": 0,
+  "replay_checksum": "97ac17a8668ce447d3ce6d940a2e7f4fcc080c061a494b2f31b0f023f44db968",
+  "source": "Coinbase Exchange public API (api.exchange.coinbase.com), product BTC-USD"
+}

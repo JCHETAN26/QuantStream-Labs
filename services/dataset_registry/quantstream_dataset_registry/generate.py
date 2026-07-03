@@ -235,7 +235,9 @@ def defective_quote_events() -> tuple[list[Quote], dict[int, list[str]]]:
 # CSV rendering (deterministic: LF line endings, minimal decimal formatting)
 # ---------------------------------------------------------------------------
 def _fmt(fixed: int, scale: int) -> str:
-    return str(from_fixed(fixed, scale))
+    # Plain fixed-point notation, never scientific: tiny crypto sizes like 0.00000026
+    # render as "0.00000026", not "2.6E-7" (which the C++ CSV parser can't read).
+    return format(from_fixed(fixed, scale), "f")
 
 
 def render_trades_csv(trades: list[Trade]) -> str:

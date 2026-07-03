@@ -55,9 +55,12 @@ walk with injected bad-tick spikes, generated deterministically by
 `services/dataset_registry` and verified by SHA-256. It exists so the headline result
 is reproducible, not so it looks like a real feed.
 
-**Real data path:** the platform accepts real market data via CSV upload
-(`POST /api/analyze`) with schema inference — the demo data is synthetic, the engine
-is not tied to it.
+**Real data:** the engine is not tied to synthetic data. `data/real/btcusd_coinbase.csv`
+is a committed snapshot of a **real Coinbase BTC-USD tape**: schema inference parses
+it, validation finds zero defects in the clean window, and deterministic replay
+produces a checksum the **C++ engine reproduces byte-for-byte** (CI-enforced). On the
+clean real tape the no-edge strategy honestly loses money (Sharpe -0.63). Arbitrary
+real data also works via CSV upload (`POST /api/analyze`).
 
 ## Known limitations (things a reviewer should push on)
 
