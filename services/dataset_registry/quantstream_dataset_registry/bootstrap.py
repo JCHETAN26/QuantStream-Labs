@@ -23,9 +23,11 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
+from quantstream_contracts.fixed_point import price_to_fixed
 from quantstream_replay import replay
 from quantstream_research import (
     DEFAULT_MIRAGE_THRESHOLD,
+    BacktestConfig,
     MeanReversionStrategy,
     detect_alpha_mirage,
 )
@@ -38,6 +40,13 @@ from .checksums import SHA256SUMS_NAME, render_sha256sums, sha256_bytes
 DATASET_ID = "alpha_mirage_demo_v2"
 HF_REPO = "JCHETAN26/quantstream-alpha-mirage"
 STRATEGY_LOOKBACK = 1
+# Transaction cost per unit of position change (commission + half-spread), ~2 bps at
+# $100. The single source of truth for the demo cost, shared by the demo CLI and API.
+DEMO_COST_PER_UNIT = price_to_fixed("0.02")
+
+
+def demo_backtest_config() -> BacktestConfig:
+    return BacktestConfig(cost_per_unit=DEMO_COST_PER_UNIT)
 
 # Files covered by SHA256SUMS ("N/N files verified").
 HASHED_FILES = (
@@ -85,7 +94,9 @@ def compute_expected_results() -> dict:
 
     raw_replay = replay(trades)
     clean_replay = replay(cleaned)
-    mirage = detect_alpha_mirage(trades, list(report.defect_map), _strategy())
+    mirage = detect_alpha_mirage(
+        trades, list(report.defect_map), _strategy(), config=demo_backtest_config()
+    )
 
     quotes, _truth = generate.defective_quote_events()
     quote_report = validate(quotes)
@@ -107,6 +118,10 @@ def compute_expected_results() -> dict:
         "expected_replay_config_hash": raw_replay.config_hash,
         "expected_raw_sharpe": str(mirage.raw.sharpe),
         "expected_clean_sharpe": str(mirage.clean.sharpe),
+        "expected_raw_sharpe_annualized": str(mirage.raw.sharpe_annualized),
+        "expected_clean_sharpe_annualized": str(mirage.clean.sharpe_annualized),
+        "expected_raw_gross_pnl": str(mirage.raw.gross_pnl),
+        "expected_raw_cost": str(mirage.raw.total_cost),
         "expected_raw_pnl": str(mirage.raw.total_pnl),
         "expected_clean_pnl": str(mirage.clean.total_pnl),
         "expected_tainted_pnl": str(mirage.raw.tainted_pnl),

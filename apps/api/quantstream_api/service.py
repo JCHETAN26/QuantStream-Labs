@@ -7,6 +7,7 @@ from decimal import Decimal
 from quantstream_contracts.events import Event
 from quantstream_contracts.fixed_point import PRICE_SCALE
 from quantstream_demo import (
+    DEMO_CONFIG,
     DEMO_STRATEGY,
     DemoResult,
     analyze_events,
@@ -90,7 +91,9 @@ def _series_for(events: list[Event], symbol: str) -> SeriesResponse:
     reconcile exactly with the reported Sharpe/PnL/mirage numbers.
     """
     report = validate(events)
-    detail = detect_alpha_mirage_detailed(events, list(report.defect_map), DEMO_STRATEGY)
+    detail = detect_alpha_mirage_detailed(
+        events, list(report.defect_map), DEMO_STRATEGY, config=DEMO_CONFIG
+    )
     ts = {e.seq: e.timestamp_ns for e in events}
 
     flagged = [

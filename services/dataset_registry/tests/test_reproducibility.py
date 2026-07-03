@@ -28,7 +28,10 @@ from quantstream_validation import Severity, validate
 from quantstream_validation import clean as clean_events
 
 from quantstream_dataset_registry import ensure_dataset
-from quantstream_dataset_registry.bootstrap import STRATEGY_LOOKBACK
+from quantstream_dataset_registry.bootstrap import (
+    STRATEGY_LOOKBACK,
+    demo_backtest_config,
+)
 
 
 @pytest.fixture(scope="module")
@@ -67,7 +70,10 @@ def test_trades_pipeline_matches_expected(data_dir: Path, expected: dict):
     assert raw.config_hash == expected["expected_replay_config_hash"]
 
     mirage = detect_alpha_mirage(
-        events, list(report.defect_map), MeanReversionStrategy(lookback=STRATEGY_LOOKBACK)
+        events,
+        list(report.defect_map),
+        MeanReversionStrategy(lookback=STRATEGY_LOOKBACK),
+        config=demo_backtest_config(),
     )
     assert mirage.raw.sharpe == Decimal(expected["expected_raw_sharpe"])
     assert mirage.clean.sharpe == Decimal(expected["expected_clean_sharpe"])

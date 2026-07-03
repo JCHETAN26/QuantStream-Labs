@@ -20,7 +20,8 @@ from quantstream_schema import InferredSchema
 
 
 class MetricsModel(BaseModel):
-    sharpe: float
+    sharpe: float  # per-step
+    sharpe_annualized: float
     total_pnl: float  # net of costs
     gross_pnl: float
     total_cost: float
@@ -65,6 +66,7 @@ class AnalysisResponse(BaseModel):
 def _metrics(m: BacktestMetrics) -> MetricsModel:
     return MetricsModel(
         sharpe=float(m.sharpe),
+        sharpe_annualized=float(m.sharpe_annualized),
         total_pnl=float(m.total_pnl),
         gross_pnl=float(m.gross_pnl),
         total_cost=float(m.total_cost),

@@ -58,12 +58,16 @@ class BacktestMetrics:
     tainted_pnl: Decimal  # net of costs
     gross_pnl: Decimal  # before costs
     total_cost: Decimal
-    sharpe: Decimal
+    sharpe: Decimal  # per-step
+    sharpe_annualized: Decimal
     max_drawdown: Decimal
     hit_rate: Decimal
     turnover: int
     active_intervals: int
     total_intervals: int
+
+
+_TRADING_NS_PER_YEAR = metrics.TRADING_SECONDS_PER_YEAR * Decimal(1_000_000_000)
 
 
 @dataclass(frozen=True)
@@ -126,13 +130,26 @@ def run_backtest(
                 )
             )
 
+    trade_ts = sorted(e.timestamp_ns for e in events if isinstance(e, Trade))
     return BacktestResult(
         contributions=tuple(contributions),
-        metrics=_build_metrics(contributions, turnover),
+        metrics=_build_metrics(contributions, turnover, trade_ts),
     )
 
 
-def _build_metrics(contributions: list[Contribution], turnover: int) -> BacktestMetrics:
+def _periods_per_year(trade_ts: list[int], num_intervals: int) -> Decimal:
+    if len(trade_ts) < 2 or num_intervals <= 0:
+        return Decimal(0)
+    span = Decimal(trade_ts[-1] - trade_ts[0])
+    if span <= 0:
+        return Decimal(0)
+    mean_interval_ns = span / Decimal(num_intervals)
+    return _TRADING_NS_PER_YEAR / mean_interval_ns
+
+
+def _build_metrics(
+    contributions: list[Contribution], turnover: int, trade_ts: list[int]
+) -> BacktestMetrics:
     scale = Decimal(PRICE_SCALE)
     net_series = [Decimal(c.net_pnl) / scale for c in contributions]
     gross_series = [Decimal(c.pnl) / scale for c in contributions]
@@ -143,12 +160,16 @@ def _build_metrics(contributions: list[Contribution], turnover: int) -> Backtest
     ]
     active = sum(1 for p in positions if p != 0)
 
+    per_step_sharpe = metrics.sharpe(net_series)
+    ppy = _periods_per_year(trade_ts, len(contributions))
+
     return BacktestMetrics(
         total_pnl=sum(net_series, Decimal(0)),
         tainted_pnl=sum(tainted_series, Decimal(0)),
         gross_pnl=sum(gross_series, Decimal(0)),
         total_cost=sum(cost_series, Decimal(0)),
-        sharpe=metrics.sharpe(net_series),
+        sharpe=per_step_sharpe,
+        sharpe_annualized=metrics.annualized_sharpe(per_step_sharpe, ppy),
         max_drawdown=metrics.max_drawdown(net_series),
         hit_rate=metrics.hit_rate(net_series, positions),
         turnover=turnover,

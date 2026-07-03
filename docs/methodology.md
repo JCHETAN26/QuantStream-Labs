@@ -15,7 +15,16 @@ assumptions are stated plainly rather than buried.
   next *trade* print, not to the mid, and assumes you can transact at the print.
 - **Transaction costs.** A cost of `cost_per_unit` is charged per unit of position
   *change* (a flip from -1 to +1 is 2 units), modeling commission plus half-spread
-  crossing. Net PnL = gross PnL - costs; Sharpe is computed on net PnL.
+  crossing. Net PnL = gross PnL - costs; Sharpe is computed on net PnL. The demo uses
+  ~2 bps per unit — under which the no-edge clean strategy is a net *loser*, as it
+  should be.
+
+- **Sharpe.** The headline figure is the **per-trade** Sharpe (mean/stdev of
+  per-interval net PnL). An **annualized** figure is also computed (per-trade Sharpe x
+  sqrt(trades per trading-year, 252 x 6.5h)). Treat the annualized number with
+  caution: annualizing a high-frequency, non-iid strategy (its "edge" is concentrated
+  in rare bad-tick events) inflates it heavily. The absurd annualized Sharpe on the
+  raw run is itself a tell that the performance is not real.
 
 ## Attribution
 
@@ -54,8 +63,8 @@ is not tied to it.
 
 - **No market impact or partial fills.** Fills are assumed at the print.
 - **Mark-to-trade, not mid.** Overstates PnL when the spread is wide.
-- **Sharpe is currently per-step, not annualized.** Meaningful annualization requires
-  realistic inter-arrival times; that lands with the realistic-data generator.
+- **Annualized Sharpe is inflated by high-frequency, non-iid returns.** The per-trade
+  figure is the honest headline; the annualized one is reported with the caveat above.
 - **Synthetic demo data.** Realistic for the mechanism it demonstrates (fake alpha
   from fading bad ticks), but not a real market sample.
 - **Kafka/Redpanda transport is a `Sink` interface, not yet a running broker
