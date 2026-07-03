@@ -11,10 +11,10 @@ import {
   YAxis,
 } from "recharts";
 import { AlertOctagon, ShieldCheck, ExternalLink, FileDown } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { api, fmtNum, fmtPct, fmtSigned } from "@/lib/api";
-import type { SeriesReport } from "@/lib/api";
+import type { DataSource, SeriesReport } from "@/lib/api";
 import { Shell } from "@/components/quant/Shell";
 import {
   Panel,
@@ -30,8 +30,12 @@ export const Route = createFileRoute("/")({
 });
 
 function AlphaMiragePage() {
-  const demoQ = useQuery({ queryKey: ["demo"], queryFn: api.demo });
-  const seriesQ = useQuery({ queryKey: ["demo", "series"], queryFn: api.demoSeries });
+  const [ds, setDs] = useState<DataSource>("synthetic");
+  const demoQ = useQuery({ queryKey: ["demo", ds], queryFn: () => api.demo(ds) });
+  const seriesQ = useQuery({
+    queryKey: ["demo", "series", ds],
+    queryFn: () => api.demoSeries(ds),
+  });
 
   const source = demoQ.data?.source ?? seriesQ.data?.source;
   const d = demoQ.data?.data;
@@ -53,8 +57,25 @@ function AlphaMiragePage() {
             </h1>
           </div>
           <div className="flex items-center gap-2">
+            <div className="inline-flex items-center border border-border rounded-sm overflow-hidden mono text-[11px]">
+              {(["synthetic", "real"] as DataSource[]).map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => setDs(opt)}
+                  className={
+                    "px-2.5 py-1.5 transition-colors " +
+                    (ds === opt
+                      ? "bg-accent-cyan/15 text-accent-cyan"
+                      : "text-muted-fg hover:text-fg")
+                  }
+                >
+                  {opt === "synthetic" ? "Synthetic ACME" : "Real BTC-USD"}
+                </button>
+              ))}
+            </div>
             <a
-              href={api.reportUrl()}
+              href={api.reportUrl(ds)}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 mono text-[11px] px-2.5 py-1.5 border border-border rounded-sm hover:border-accent-cyan hover:text-accent-cyan transition-colors"

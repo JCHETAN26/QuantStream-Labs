@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ValidationRouteImport } from './routes/validation'
 import { Route as UploadRouteImport } from './routes/upload'
+import { Route as ReplayRouteImport } from './routes/replay'
 import { Route as OrderbookRouteImport } from './routes/orderbook'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiBackendSplatRouteImport } from './routes/api/backend/$'
@@ -23,6 +24,11 @@ const ValidationRoute = ValidationRouteImport.update({
 const UploadRoute = UploadRouteImport.update({
   id: '/upload',
   path: '/upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReplayRoute = ReplayRouteImport.update({
+  id: '/replay',
+  path: '/replay',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrderbookRoute = OrderbookRouteImport.update({
@@ -44,6 +50,7 @@ const ApiBackendSplatRoute = ApiBackendSplatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/orderbook': typeof OrderbookRoute
+  '/replay': typeof ReplayRoute
   '/upload': typeof UploadRoute
   '/validation': typeof ValidationRoute
   '/api/backend/$': typeof ApiBackendSplatRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/orderbook': typeof OrderbookRoute
+  '/replay': typeof ReplayRoute
   '/upload': typeof UploadRoute
   '/validation': typeof ValidationRoute
   '/api/backend/$': typeof ApiBackendSplatRoute
@@ -59,19 +67,33 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/orderbook': typeof OrderbookRoute
+  '/replay': typeof ReplayRoute
   '/upload': typeof UploadRoute
   '/validation': typeof ValidationRoute
   '/api/backend/$': typeof ApiBackendSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/orderbook' | '/upload' | '/validation' | '/api/backend/$'
+  fullPaths:
+    | '/'
+    | '/orderbook'
+    | '/replay'
+    | '/upload'
+    | '/validation'
+    | '/api/backend/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/orderbook' | '/upload' | '/validation' | '/api/backend/$'
+  to:
+    | '/'
+    | '/orderbook'
+    | '/replay'
+    | '/upload'
+    | '/validation'
+    | '/api/backend/$'
   id:
     | '__root__'
     | '/'
     | '/orderbook'
+    | '/replay'
     | '/upload'
     | '/validation'
     | '/api/backend/$'
@@ -80,6 +102,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   OrderbookRoute: typeof OrderbookRoute
+  ReplayRoute: typeof ReplayRoute
   UploadRoute: typeof UploadRoute
   ValidationRoute: typeof ValidationRoute
   ApiBackendSplatRoute: typeof ApiBackendSplatRoute
@@ -99,6 +122,13 @@ declare module '@tanstack/react-router' {
       path: '/upload'
       fullPath: '/upload'
       preLoaderRoute: typeof UploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/replay': {
+      id: '/replay'
+      path: '/replay'
+      fullPath: '/replay'
+      preLoaderRoute: typeof ReplayRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/orderbook': {
@@ -128,6 +158,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   OrderbookRoute: OrderbookRoute,
+  ReplayRoute: ReplayRoute,
   UploadRoute: UploadRoute,
   ValidationRoute: ValidationRoute,
   ApiBackendSplatRoute: ApiBackendSplatRoute,

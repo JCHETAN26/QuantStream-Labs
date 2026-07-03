@@ -1,9 +1,17 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Activity, ShieldCheck, LayoutGrid, Upload, Circle } from "lucide-react";
+import {
+  Activity,
+  ShieldCheck,
+  LayoutGrid,
+  Upload,
+  Circle,
+  Radio,
+} from "lucide-react";
 import type { ReactNode } from "react";
 
 const NAV = [
   { to: "/", label: "Alpha Mirage", icon: Activity },
+  { to: "/replay", label: "Live Replay", icon: Radio },
   { to: "/validation", label: "Validation", icon: ShieldCheck },
   { to: "/orderbook", label: "OrderBookLab", icon: LayoutGrid },
   { to: "/upload", label: "Upload", icon: Upload },
