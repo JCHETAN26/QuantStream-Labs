@@ -65,10 +65,16 @@ jobs:
         run: cmake --build build-cpp
       - name: Test (cross-language golden match)
         run: ctest --test-dir build-cpp --output-on-failure
-      - name: C++ replay CLI matches Python checksum on the real dataset
+      - name: C++ replay CLI matches Python checksum on the demo dataset
         run: |
           EXPECTED=$(python3 -c "import json;print(json.load(open('data/demo/expected_results.json'))['expected_replay_checksum'])")
           GOT=$(./build-cpp/replay data/demo/defective_trades.csv | awk '/replay_checksum/{print $2}')
+          echo "expected=$EXPECTED got=$GOT"
+          test "$EXPECTED" = "$GOT"
+      - name: C++ replay CLI matches on a REAL Coinbase tape
+        run: |
+          EXPECTED=$(python3 -c "import json;print(json.load(open('data/real/expected.json'))['replay_checksum'])")
+          GOT=$(./build-cpp/replay data/real/btcusd_coinbase.csv | awk '/replay_checksum/{print $2}')
           echo "expected=$EXPECTED got=$GOT"
           test "$EXPECTED" = "$GOT"
 
