@@ -125,6 +125,10 @@ async def analyze_series(file: UploadFile = File(...)) -> SeriesResponse:
 
 
 def run() -> None:  # pragma: no cover - convenience entry point
+    import os
+
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # Hosting platforms (Render/Railway/Fly/Cloud Run) inject the port via $PORT.
+    port = int(os.environ.get("PORT", "8000"))
+    uvicorn.run(app, host="0.0.0.0", port=port)

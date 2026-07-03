@@ -1,0 +1,12 @@
+# Backend dependency set for the Vercel Python serverless deployment.
+# Installs the QuantStream monorepo packages (contracts first) plus the FastAPI
+# gateway, which pulls in fastapi / uvicorn / python-multipart / pydantic.
+./packages/contracts
+./services/validation-engine
+./services/replay-engine
+./services/research-engine
+./services/schema-worker
+./services/orderbook-lab
+./services/dataset_registry
+./apps/demo
+./apps/api

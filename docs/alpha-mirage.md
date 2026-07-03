@@ -78,8 +78,8 @@ On the official dataset (`defective_trades.csv`), the mean-reversion strategy bo
 almost all of its PnL fading injected bad-tick spikes. Cleaning those events removes
 the edge:
 
-- Raw Sharpe ≈ 0.32, Clean Sharpe ≈ −0.10
-- Raw PnL ≈ +\$3,001, Clean PnL ≈ −\$0.56
+- Raw Sharpe ≈ 0.42, Clean Sharpe ≈ −0.08
+- Raw PnL ≈ +\$3,707, Clean PnL ≈ −\$4.31
 - Mirage score ≈ 1.0 → **not research-safe**
 
 The exact, full-precision values are locked in `data/demo/expected_results.json`

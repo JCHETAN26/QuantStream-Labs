@@ -19,7 +19,7 @@ make demo-alpha-mirage  # run the pipeline, print the verdict, write the report
 ```text
 QuantStream Labs — Alpha Mirage Demo
 ====================================================
-Dataset:          alpha_mirage_demo_v1
+Dataset:          alpha_mirage_demo_v2
 Source:           cache   revision: local
 Checksum status:  PASS (6/6 files verified)
 
@@ -29,11 +29,11 @@ High-severity defects: 0
 Companion quotes:      defective_quotes.csv  (10 failures, 5 high-severity)
                        crossed_book 3, invalid_price 2, stale_quote 5
 
-Replay checksum (raw):   7c517a403b20c3b2068215bb2fef5bc66f19b33677041ed6f605f193afe25b06
-Replay checksum (clean): 8987f19a0eacecb232e3efa897e27b217b4d567321381f1319dce9df1d440622
+Replay checksum (raw):   6deb77e9f4187597d0127592900e0b5ef36ce8f199e807bdc96891c74365dd29
+Replay checksum (clean): 66a9acb3fe9569bda8ff4d31b6fcef5444b91c29bc012685627c1309af04b2c0
 
-Raw Sharpe:   0.32      Raw PnL:   +$3,001.34
-Clean Sharpe: -0.10      Clean PnL: -$0.56
+Raw Sharpe:   0.42      Raw PnL:   +$3,706.88
+Clean Sharpe: -0.08      Clean PnL: -$4.31
 Mirage Score: 100%
 
 Conclusion: ALPHA MIRAGE DETECTED

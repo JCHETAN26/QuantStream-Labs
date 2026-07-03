@@ -1,0 +1,5 @@
+{
+  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }],
+  "env": { "QUANTSTREAM_DATA_DIR": "/tmp/quantstream-demo" },
+  "functions": { "api/index.py": { "maxDuration": 30 } }
+}
