@@ -147,11 +147,11 @@ def _dataset_id(data_dir: Path) -> str:
     if path.is_file():
         try:
             return json.loads(path.read_text(encoding="utf-8")).get(
-                "dataset_id", "alpha_mirage_demo_v1"
+                "dataset_id", "alpha_mirage_demo_v2"
             )
         except (ValueError, OSError):
             pass
-    return "alpha_mirage_demo_v1"
+    return "alpha_mirage_demo_v2"
 
 
 def run_demo(csv_path: str | None = None, *, strict: bool = True) -> DemoResult:
