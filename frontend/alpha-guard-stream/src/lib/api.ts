@@ -102,8 +102,8 @@ export interface OrderBookL1Report {
 export interface OrderBookL2Snapshot {
   seq: number;
   timestamp_ns: string;
-  best_bid: number;
-  best_ask: number;
+  best_bid: number | null;
+  best_ask: number | null;
   bid_depth: number;
   ask_depth: number;
   depth_imbalance: number;
@@ -195,18 +195,23 @@ export const api = {
   },
 };
 
-export function fmtNum(n: number, digits = 2) {
+// Null-safe formatters: L2 best_bid/best_ask can be null before both sides of the
+// book exist, so render a placeholder instead of crashing on .toLocaleString().
+export function fmtNum(n: number | null | undefined, digits = 2, fallback = "—") {
+  if (n == null || Number.isNaN(n)) return fallback;
   return n.toLocaleString(undefined, {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   });
 }
 
-export function fmtPct(n: number, digits = 1) {
+export function fmtPct(n: number | null | undefined, digits = 1, fallback = "—") {
+  if (n == null || Number.isNaN(n)) return fallback;
   return `${(n * 100).toFixed(digits)}%`;
 }
 
-export function fmtSigned(n: number, digits = 2) {
+export function fmtSigned(n: number | null | undefined, digits = 2, fallback = "—") {
+  if (n == null || Number.isNaN(n)) return fallback;
   const s = fmtNum(Math.abs(n), digits);
   return n >= 0 ? `+${s}` : `-${s}`;
 }
